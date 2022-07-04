@@ -139,18 +139,23 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	 * Set whether this bean should be lazily initialized.
 	 * <p>If {@code false}, the bean will get instantiated on startup by bean
 	 * factories that perform eager initialization of singletons.
+	 * 配置懒加载的bean，不会在Spring初始化的时候实例化bean，而是要等到使用这个bean的时候才会去初始化。
 	 */
 	void setLazyInit(boolean lazyInit);
 
 	/**
 	 * Return whether this bean should be lazily initialized, i.e. not
 	 * eagerly instantiated on startup. Only applicable to a singleton bean.
+	 * 配置懒加载的bean，不会在Spring初始化的时候实例化bean，而是要等到使用这个bean的时候才会去初始化。
 	 */
 	boolean isLazyInit();
 
 	/**
 	 * Set the names of the beans that this bean depends on being initialized.
 	 * The bean factory will guarantee that these beans get initialized first.
+	 * 如果有一个UserService的bean，这个bean的初始化需要依赖于PowerService、RoleService。
+	 * 那么在UserService上声明@DependsOn标签，参数是String数组，
+	 * 传入PowerService、RoleService的BeanName即可。Spring在初始化UserService的时候会去判断所依赖的bean是否已经实例化完成了。
 	 */
 	void setDependsOn(@Nullable String... dependsOn);
 
