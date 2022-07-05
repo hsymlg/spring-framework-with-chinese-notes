@@ -56,19 +56,20 @@ import org.springframework.util.Assert;
 @SuppressWarnings("serial")
 public class RootBeanDefinition extends AbstractBeanDefinition {
 
+	//BeanDefinitionHolder存储有Bean的名称、别名、BeanDefinition
 	@Nullable
 	private BeanDefinitionHolder decoratedDefinition;
-
+	// AnnotatedElement 是java反射包的接口，通过它可以查看Bean的注解信息
 	@Nullable
 	private AnnotatedElement qualifiedElement;
 
 	/** Determines if the definition needs to be re-merged. */
 	volatile boolean stale;
-
+	//允许缓存
 	boolean allowCaching = true;
-
+	//从字面上理解：工厂方法是否唯一
 	boolean isFactoryMethodUnique;
-
+	//封装了java.lang.reflect.Type,提供了泛型相关的操作
 	@Nullable
 	volatile ResolvableType targetType;
 

@@ -27,6 +27,7 @@ import org.springframework.lang.Nullable;
  */
 public interface BeanMetadataElement {
 
+	//获取源对象,可能返回null，BeanDefinition中存了业务类在虚拟机中的class，class的源就是你硬盘上的文件路径
 	/**
 	 * Return the configuration source {@code Object} for this metadata element
 	 * (may be {@code null}).

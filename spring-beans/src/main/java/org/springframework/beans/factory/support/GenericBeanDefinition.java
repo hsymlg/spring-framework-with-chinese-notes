@@ -40,6 +40,7 @@ import org.springframework.util.ObjectUtils;
 @SuppressWarnings("serial")
 public class GenericBeanDefinition extends AbstractBeanDefinition {
 
+	//父BeanDefinition名字
 	@Nullable
 	private String parentName;
 
@@ -57,6 +58,7 @@ public class GenericBeanDefinition extends AbstractBeanDefinition {
 	}
 
 	/**
+	 * 从一个给定的BeanDefinition中将属性值copy给新的GenericBeanDefinition
 	 * Create a new GenericBeanDefinition as deep copy of the given
 	 * bean definition.
 	 * @param original the original bean definition to copy from

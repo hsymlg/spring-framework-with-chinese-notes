@@ -28,12 +28,12 @@ import org.springframework.util.ObjectUtils;
  * @since 2.5
  */
 public class BeanMetadataAttribute implements BeanMetadataElement {
-
+	// 属性名
 	private final String name;
-
+	// 属性值
 	@Nullable
 	private final Object value;
-
+	// 属性所属对象，这里的源是属性值对象的源，不是BeanDefinition中所封装的业务类的源
 	@Nullable
 	private Object source;
 

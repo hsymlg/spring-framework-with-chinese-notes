@@ -24,7 +24,8 @@ import org.springframework.util.Assert;
 /**
  * Interface defining a generic contract for attaching and accessing metadata
  * to/from arbitrary objects.
- *
+ * 定义用于附加和访问BeanDefinition元数据的通用的接口，来自任意对象
+ * AttributeAccessorSupport就是维护一个LinkedHashMap而已，BeanDefinition的某些属性值就存储在这个LinkedHashMap
  * @author Rob Harrop
  * @author Sam Brannen
  * @since 2.0
@@ -37,6 +38,7 @@ public interface AttributeAccessor {
 	 * <p>In general, users should take care to prevent overlaps with other
 	 * metadata attributes by using fully-qualified names, perhaps using
 	 * class or package names as prefix.
+	 * 将name的属性值设置为value
 	 * @param name the unique attribute key
 	 * @param value the attribute value to be attached
 	 */
@@ -45,6 +47,7 @@ public interface AttributeAccessor {
 	/**
 	 * Get the value of the attribute identified by {@code name}.
 	 * <p>Return {@code null} if the attribute doesn't exist.
+	 * 获取name的属性值，如果该属性不存在，则返回Null
 	 * @param name the unique attribute key
 	 * @return the current value of the attribute, if any
 	 */
@@ -95,12 +98,14 @@ public interface AttributeAccessor {
 	/**
 	 * Return {@code true} if the attribute identified by {@code name} exists.
 	 * <p>Otherwise return {@code false}.
+	 * 如果name属性值存在则返回true，否者返回false
 	 * @param name the unique attribute key
 	 */
 	boolean hasAttribute(String name);
 
 	/**
 	 * Return the names of all attributes.
+	 * 返回所有的属性名称
 	 */
 	String[] attributeNames();
 

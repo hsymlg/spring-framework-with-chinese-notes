@@ -23,6 +23,7 @@ import org.springframework.lang.Nullable;
  * Extension of {@link org.springframework.core.AttributeAccessorSupport},
  * holding attributes as {@link BeanMetadataAttribute} objects in order
  * to keep track of the definition source.
+ * BeanMetadataAttributeAccessor不但继承了BeanMetadataElement还实现了AttributeAccessorSupport，换言之，既可以操作属性值，也可以操作源。
  *
  * @author Juergen Hoeller
  * @since 2.5
@@ -37,11 +38,13 @@ public class BeanMetadataAttributeAccessor extends AttributeAccessorSupport impl
 	/**
 	 * Set the configuration source {@code Object} for this metadata element.
 	 * <p>The exact type of the object will depend on the configuration mechanism used.
+	 * 设置源
 	 */
 	public void setSource(@Nullable Object source) {
 		this.source = source;
 	}
 
+	//获取源
 	@Override
 	@Nullable
 	public Object getSource() {
@@ -53,6 +56,7 @@ public class BeanMetadataAttributeAccessor extends AttributeAccessorSupport impl
 	 * Add the given BeanMetadataAttribute to this accessor's set of attributes.
 	 * @param attribute the BeanMetadataAttribute object to register
 	 */
+	//设置属性值，如果已经存在就覆盖，不存在就添加，BeanMetadataAttribute封装了键值对
 	public void addMetadataAttribute(BeanMetadataAttribute attribute) {
 		super.setAttribute(attribute.getName(), attribute);
 	}
@@ -62,6 +66,7 @@ public class BeanMetadataAttributeAccessor extends AttributeAccessorSupport impl
 	 * @param name the name of the attribute
 	 * @return the corresponding BeanMetadataAttribute object,
 	 * or {@code null} if no such attribute defined
+	 * 根据名字获取属性键值对的封装对象BeanMetadataAttribute
 	 */
 	@Nullable
 	public BeanMetadataAttribute getMetadataAttribute(String name) {
