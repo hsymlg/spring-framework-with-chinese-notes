@@ -37,7 +37,7 @@ import org.springframework.util.ObjectUtils;
  * which allows to dynamically define parent dependencies through the
  * {@link GenericBeanDefinition#setParentName} method. This effectively
  * supersedes the ChildBeanDefinition class for most use cases.
- *
+ * ChildBeanDefinition必须作为子bd出现。
  * @author Rod Johnson
  * @author Juergen Hoeller
  * @see GenericBeanDefinition

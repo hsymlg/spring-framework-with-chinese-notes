@@ -30,7 +30,7 @@ import org.springframework.util.ObjectUtils;
  * registering user-visible bean definitions (which a post-processor might operate on,
  * potentially even reconfiguring the parent name). Use {@code RootBeanDefinition} /
  * {@code ChildBeanDefinition} where parent/child relationships happen to be pre-determined.
- *
+ * GenericBeanDefinition可以作为父bd出现，也可以作为子bd出现。他可以完全替代ChildBeanDefinition，但不能完全替代RootBeanDefinition
  * @author Juergen Hoeller
  * @since 2.5
  * @see #setParentName
