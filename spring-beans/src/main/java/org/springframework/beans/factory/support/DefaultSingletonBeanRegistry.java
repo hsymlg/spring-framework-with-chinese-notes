@@ -76,6 +76,20 @@ import org.springframework.util.StringUtils;
  *
  * 这个类主要用作基类的BeanFactory实现， 提供基本的管理
  * singleton bean 实例功能。
+ *
+ * 一看名字，就知道这是一个SingletonBean注册的地方，此类也实现了SingletonBeanRegistry接口，继承了SimpleAliasRegistry。
+ * 这也可以理解，DefaultSingletonBeanRegistry既有管理SingletonBean的功能，又提供了别名的功能，那当然可以继承SimpleAliasRegistry了。
+ * DefaultSingletonBeanRegistry是一个通用的存储共享bean实例的地方，通过bean的名字获得bean。同时，它也给提供一次性bean的注册功能。
+ * 这个类的主要作用是，给BeanFactory的实现，提供基本的管理singleton bean实例功能。
+ * 这个类中，使用了三个主要的存储器（map）来分别存储singletonObject，singletonFactory，earlySingletonObject。
+ * 当注册一个singleton object的时候，会在 singletonObject 的存储器中加入此 object，而在其他的两个存储器中移除。当然，这样的行为是可以在子类中去复写的。
+ * 在 getSingleton的时候，spring的默认实现是，先从 singleton object 的存储器中去寻找，如果找不到，再从 early singleton object 存储器中寻找，
+ * 再找不到，那就在寻找对应的 singleton factory，造出所需的 singleton object，然后返回。而 contains singleton 就是直接检查 singleton object 存储器了，其他的存储器不做检查。
+ * 而 get singleton counts 也是统计 singleton object 的数量。
+ * 看完了代码，再仔细想想，为什么这个类要使用三个存储器呢？
+ * 我想， singletonObjects 就是直观的存储着 singleton 的，而 singletonFactories 是存储的制造 singleton 的工厂，还有一个 earlySingletonObject，
+ * 在看了代码之后，我更觉得这是一个 早期singletonFactory 制造出来的 singleton 的缓存。
+ *
  */
 public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements SingletonBeanRegistry {
 
