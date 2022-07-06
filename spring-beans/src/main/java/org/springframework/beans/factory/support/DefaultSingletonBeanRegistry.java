@@ -415,6 +415,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * Callback before singleton creation.
 	 * <p>The default implementation register the singleton as currently in creation.
 	 * 单例对象创建前的回调,默认实现singletonsCurrentlyInCreation集合注册正在创建的单例.
+	 * 该方法主要的作用是在创建单例bean时,是否需要后置处理,如果需要就会回调该方法
 	 * @param beanName the name of the singleton about to be created
 	 * @see #isSingletonCurrentlyInCreation
 	 */
