@@ -33,7 +33,13 @@ import org.springframework.util.Assert;
  * in Spring's component scanning support (where the default definition class is
  * {@link org.springframework.context.annotation.ScannedGenericBeanDefinition},
  * which also implements the AnnotatedBeanDefinition interface).
- *
+ *  AnnotatedGenericBeanDefinition在两种地方会使用。spring启动时会生成一个AnnotatedBeanDefinitionReader读取器：
+ *  public AnnotationConfigApplicationContext() {
+ *         //在IOC容器中初始化一个 注解bean读取器AnnotatedBeanDefinitionReader
+ *         this.reader = new AnnotatedBeanDefinitionReader(this);
+ *         //在IOC容器中初始化一个 按类路径扫描注解bean的 扫描器
+ *         this.scanner = new ClassPathBeanDefinitionScanner(this);
+ *     }
  * @author Juergen Hoeller
  * @author Chris Beams
  * @since 2.5

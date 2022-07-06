@@ -38,7 +38,7 @@ import org.springframework.util.Assert;
  *
  * <p>This is an alternative to {@link ClassPathBeanDefinitionScanner}, applying
  * the same resolution of annotations but for explicitly registered classes only.
- *
+ * 通过AnnotatedBeanDefinitionReader手动注册的类sping都会生成AnnotatedGenericBeanDefinition。而自动扫描的都会生成ScannedGenericBeanDefinition。
  * @author Juergen Hoeller
  * @author Chris Beams
  * @author Sam Brannen
