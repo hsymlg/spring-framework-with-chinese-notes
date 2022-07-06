@@ -23,7 +23,7 @@ import org.springframework.lang.Nullable;
  * Can be implemented by {@link org.springframework.beans.factory.BeanFactory}
  * implementations in order to expose their singleton management facility
  * in a uniform manner.
- *
+ * 单例Bean的注册中心
  * <p>The {@link ConfigurableBeanFactory} interface extends this interface.
  *
  * @author Juergen Hoeller
@@ -49,6 +49,7 @@ public interface SingletonBeanRegistry {
 	 * for runtime registration of singletons. As a consequence, a registry
 	 * implementation should synchronize singleton access; it will have to do
 	 * this anyway if it supports a BeanFactory's lazy initialization of singletons.
+	 * 在给定的bean名称下，在bean注册表中将给定的现有对象注册为singleton。
 	 * @param beanName the name of the bean
 	 * @param singletonObject the existing singleton object
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet
@@ -66,6 +67,7 @@ public interface SingletonBeanRegistry {
 	 * defined by a bean definition that already been created, in a raw fashion.
 	 * <p><b>NOTE:</b> This lookup method is not aware of FactoryBean prefixes or aliases.
 	 * You need to resolve the canonical bean name first before obtaining the singleton instance.
+	 * 返回在给定名称下注册的（原始）单例对象。
 	 * @param beanName the name of the bean to look for
 	 * @return the registered singleton object, or {@code null} if none found
 	 * @see ConfigurableListableBeanFactory#getBeanDefinition
@@ -89,6 +91,7 @@ public interface SingletonBeanRegistry {
 	 * instance or created by bean definition), also checking ancestor factories.
 	 * <p><b>NOTE:</b> This lookup method is not aware of FactoryBean prefixes or aliases.
 	 * You need to resolve the canonical bean name first before checking the singleton status.
+	 * 检查此注册表是否包含具有给定名称的单例实例。
 	 * @param beanName the name of the bean to look for
 	 * @return if this bean factory contains a singleton instance with the given name
 	 * @see #registerSingleton
@@ -104,6 +107,7 @@ public interface SingletonBeanRegistry {
 	 * <p>The main purpose of this method is to check manually registered singletons
 	 * (see {@link #registerSingleton}). Can also be used to check which singletons
 	 * defined by a bean definition have already been created.
+	 * 返回在此注册表中注册的单例bean的名称。
 	 * @return the list of names as a String array (never {@code null})
 	 * @see #registerSingleton
 	 * @see org.springframework.beans.factory.support.BeanDefinitionRegistry#getBeanDefinitionNames
@@ -118,6 +122,7 @@ public interface SingletonBeanRegistry {
 	 * <p>The main purpose of this method is to check manually registered singletons
 	 * (see {@link #registerSingleton}). Can also be used to count the number of
 	 * singletons defined by a bean definition that have already been created.
+	 * 返回在此注册表中注册的单例bean的数量。
 	 * @return the number of singleton beans
 	 * @see #registerSingleton
 	 * @see org.springframework.beans.factory.support.BeanDefinitionRegistry#getBeanDefinitionCount
@@ -127,6 +132,7 @@ public interface SingletonBeanRegistry {
 
 	/**
 	 * Return the singleton mutex used by this registry (for external collaborators).
+	 * 返回此注册表使用的单例互斥锁（对于外部协作者）。
 	 * @return the mutex object (never {@code null})
 	 * @since 4.2
 	 */
