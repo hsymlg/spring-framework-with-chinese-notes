@@ -37,7 +37,7 @@ import org.springframework.util.Assert;
  * but distinguishes by type beans that have been <em>scanned</em> vs those that have
  * been otherwise registered or detected by other means.
  * ScannedGenericBeanDefinition实现了AnnotatedBeanDefinition接口且继承了GenericBeanDefinition类，
- * scan翻译成中文就是扫描的意思，顾名思义，它就是spring扫描后生成的BeanDefinition。它的源码也很容易理解，读者自行查阅。
+ * scan翻译成中文就是扫描的意思，顾名思义，它就是spring扫描后生成的BeanDefinition。
  * @author Juergen Hoeller
  * @author Chris Beams
  * @since 2.5
