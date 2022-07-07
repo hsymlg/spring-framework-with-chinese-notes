@@ -116,6 +116,9 @@ import org.springframework.lang.Nullable;
  * @see org.springframework.beans.factory.config.DestructionAwareBeanPostProcessor#postProcessBeforeDestruction
  * @see DisposableBean#destroy
  * @see org.springframework.beans.factory.support.RootBeanDefinition#getDestroyMethodName
+ * 4个获取实例的方法。getBean的重载方法。
+ * 4个判断的方法。判断是否存在，是否为单例、原型，名称类型是否匹配。
+ * 1个获取类型的方法、一个获取别名的方法。根据名称获取类型、根据名称获取别名。
  */
 public interface BeanFactory {
 
@@ -124,6 +127,7 @@ public interface BeanFactory {
 	 * beans <i>created</i> by the FactoryBean. For example, if the bean named
 	 * {@code myJndiObject} is a FactoryBean, getting {@code &myJndiObject}
 	 * will return the factory, not the instance returned by the factory.
+	 * 用来引用一个实例，或把它和工厂产生的Bean区分开，就是说，如果一个FactoryBean的名字为a，那么，&a会得到那个Factory
 	 */
 	String FACTORY_BEAN_PREFIX = "&";
 

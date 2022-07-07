@@ -428,7 +428,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	/**
 	 * Callback after singleton creation.
 	 * <p>The default implementation marks the singleton as not in creation anymore.
-	 * 单例创建之后的回调,默认实现singletonCurrentlyInCreation集合移除正在创建的单例<
+	 * 单例创建之后的回调,默认实现singletonCurrentlyInCreation集合移除正在创建的单例
 	 * @param beanName the name of the singleton that has been created
 	 * @see #isSingletonCurrentlyInCreation
 	 */
