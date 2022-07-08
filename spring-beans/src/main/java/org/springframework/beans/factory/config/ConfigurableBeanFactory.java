@@ -41,7 +41,8 @@ import org.springframework.util.StringValueResolver;
  * {@link org.springframework.beans.factory.ListableBeanFactory} for typical
  * needs. This extended interface is just meant to allow for framework-internal
  * plug'n'play and for special access to bean factory configuration methods.
- *
+ * 该接口主要扩展了一些复杂的对单例Bean的配置与操作，虽然这个接口并没有被ApplicationContext高级容器体系所继承，
+ * 但是一般的容器实现类都会继承或实现这个接口，目的是使用一种统一的方式对外暴露管理单例Bean的方式。
  * @author Juergen Hoeller
  * @since 03.11.2003
  * @see org.springframework.beans.factory.BeanFactory
@@ -74,6 +75,7 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * a parent BeanFactory
 	 * @see #getParentBeanFactory()
 	 */
+	//可以设置父工厂，但是值得注意的是，只能设置一次，不能改变
 	void setParentBeanFactory(BeanFactory parentBeanFactory) throws IllegalStateException;
 
 	/**
@@ -86,6 +88,7 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @param beanClassLoader the class loader to use,
 	 * or {@code null} to suggest the default class loader
 	 */
+	//配置ClassLoader，只是应用于Bean definition
 	void setBeanClassLoader(@Nullable ClassLoader beanClassLoader);
 
 	/**
@@ -122,6 +125,7 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * and in particular bean classes. If this flag is off, any creation of a bean
 	 * instance will re-query the bean class loader for newly resolved classes.
 	 */
+	// 设置、是否缓存元数据，如果false，那么每次请求实例，都会从类加载器重新加载（热加载）,这里还不太懂
 	void setCacheBeanMetadata(boolean cacheBeanMetadata);
 
 	/**
@@ -137,6 +141,7 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * here, supporting "#{...}" expressions in a Unified EL compatible style.
 	 * @since 3.0
 	 */
+	//表达式支持，配置表达式支持器
 	void setBeanExpressionResolver(@Nullable BeanExpressionResolver resolver);
 
 	/**
@@ -168,6 +173,7 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * preferable to use this method instead of {@link #registerCustomEditor}.
 	 * @param registrar the PropertyEditorRegistrar to register
 	 */
+	//配置属性编辑器
 	void addPropertyEditorRegistrar(PropertyEditorRegistrar registrar);
 
 	/**
@@ -198,6 +204,7 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @see #addPropertyEditorRegistrar
 	 * @see #registerCustomEditor
 	 */
+	//配置类型转换器TypeCoverter
 	void setTypeConverter(TypeConverter typeConverter);
 
 	/**
@@ -214,6 +221,7 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @param valueResolver the String resolver to apply to embedded values
 	 * @since 3.0
 	 */
+	//字符串处理器
 	void addEmbeddedValueResolver(StringValueResolver valueResolver);
 
 	/**
@@ -229,6 +237,7 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @return the resolved value (may be the original value as-is)
 	 * @since 3.0
 	 */
+	//处理字符串
 	@Nullable
 	String resolveEmbeddedValue(String value);
 
@@ -242,6 +251,7 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * will always be applied after programmatically registered ones.
 	 * @param beanPostProcessor the post-processor to register
 	 */
+	//添加后处理器
 	void addBeanPostProcessor(BeanPostProcessor beanPostProcessor);
 
 	/**
@@ -310,6 +320,7 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @param alias the alias to be registered for the bean
 	 * @throws BeanDefinitionStoreException if the alias is already in use
 	 */
+	//注册别名依赖关系
 	void registerAlias(String beanName, String alias) throws BeanDefinitionStoreException;
 
 	/**
@@ -367,6 +378,7 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * @param dependentBeanName the name of the dependent bean
 	 * @since 2.5
 	 */
+	//注册依赖Bean
 	void registerDependentBean(String beanName, String dependentBeanName);
 
 	/**

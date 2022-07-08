@@ -48,7 +48,7 @@ import org.springframework.lang.Nullable;
  * <p><b>NOTE:</b> With the exception of {@code getBeanDefinitionCount}
  * and {@code containsBeanDefinition}, the methods in this interface
  * are not designed for frequent invocation. Implementations may be slow.
- *
+ * ListableBeanFactory主要对外提供了批量获取Bean和BeanDefinition的方法，拓展类了BeanFactory的功能
  * @author Rod Johnson
  * @author Juergen Hoeller
  * @since 16 April 2001
