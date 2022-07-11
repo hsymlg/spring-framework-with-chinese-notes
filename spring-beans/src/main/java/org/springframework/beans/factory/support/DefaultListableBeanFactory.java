@@ -775,43 +775,66 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 									!requiresEagerInitForType(mbd.getFactoryBeanName()))) {
 						//是否是FactoryBean类型标记：判断beanName和mbd所指的bean是否已定义为FactoryBean
 						boolean isFactoryBean = isFactoryBean(beanName, mbd);
+						//获取mbd修饰的目标定义，
+						// BeanDefinitionHolder:具有名称和别名的BeanDefinition的持有人
 						BeanDefinitionHolder dbd = mbd.getDecoratedDefinition();
+						//初始化匹配已找到标记为未找到
 						boolean matchFound = false;
+						//允许FactoryBean初始化标记：只要参数允许饿汉式初始化 或者 beanName已经在单例对象的高速缓存Map集合有所属对象
 						boolean allowFactoryBeanInit = (allowEagerInit || containsSingleton(beanName));
+						//是非延时装饰标记：mdb有配置BeanDefinitionHolder 且 mbd没有设置延时初始化
 						boolean isNonLazyDecorated = (dbd != null && !mbd.isLazyInit());
+						//如果不是FactoryBean类型
 						if (!isFactoryBean) {
+							//如果包含非单例 或者 beanName, mbd, dbd所指向的bean是单例
 							if (includeNonSingletons || isSingleton(beanName, mbd, dbd)) {
+								//将beanName的Bean类型是否与type匹配的结果赋值给matchFound
 								matchFound = isTypeMatch(beanName, type, allowFactoryBeanInit);
 							}
 						}
+						//如果是FactoryBean类型
 						else {
+							//如果包含非单例 或者 mdb没有配置延时 或者 (允许FactoryBean初始化 且  beanName, mbd, dbd所指向的bean是单例)
 							if (includeNonSingletons || isNonLazyDecorated ||
 									(allowFactoryBeanInit && isSingleton(beanName, mbd, dbd))) {
+								//将beanName的Bean类型是否与type匹配的结果赋值给matchFound
 								matchFound = isTypeMatch(beanName, type, allowFactoryBeanInit);
 							}
+							//如果不匹配
 							if (!matchFound) {
 								// In case of FactoryBean, try to match FactoryBean instance itself next.
+								// 如果是FactoryBean，请尝试接下来匹配FactoryBean实例本身
+								// 将beanName改成解引用名
 								beanName = FACTORY_BEAN_PREFIX + beanName;
 								if (includeNonSingletons || isSingleton(beanName, mbd, dbd)) {
+									//将beanName的Bean类型是否与type匹配的结果赋值给matchFound(此时的beanName是解引用名)
 									matchFound = isTypeMatch(beanName, type, allowFactoryBeanInit);
 								}
 							}
 						}
+						//如果匹配成功
 						if (matchFound) {
+							//将beanName添加到result中
 							result.add(beanName);
 						}
 					}
 				}
+				//捕捉BeanFactory无法加载给定bean的指定类时引发的异常 和 当BeanFactory遇到无效的bean定义时引发的异常
 				catch (CannotLoadBeanClassException | BeanDefinitionStoreException ex) {
+					//如果是允许马上初始化，重新抛出异常
 					if (allowEagerInit) {
 						throw ex;
 					}
 					// Probably a placeholder: let's ignore it for type matching purposes.
+					// 可能是占位符：处于类型匹配的目的，我们将其忽略
+					// 构建日志消息：如果ex是CannotLoadBeanClassException，描述忽略Bean 'beanName'的Bean类加载失败；否则
+					// 描述忽略bean定义'beanName'中无法解析的元数据
 					LogMessage message = (ex instanceof CannotLoadBeanClassException ?
 							LogMessage.format("Ignoring bean class loading failure for bean '%s'", beanName) :
 							LogMessage.format("Ignoring unresolvable metadata in bean definition '%s'", beanName));
 					logger.trace(message, ex);
 					// Register exception, in case the bean was accidentally unresolvable.
+					//将要注册的异常对象添加到 抑制异常列表【DefaultSingletonBeanRegistry#suppressedExceptions】中
 					onSuppressedException(ex);
 				}
 				catch (NoSuchBeanDefinitionException ex) {
@@ -821,71 +844,170 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 
 		// Check manually registered singletons too.
+		// 也检查手动注册的单例
+		// 遍历 手动注册单例的名称列表
 		for (String beanName : this.manualSingletonNames) {
 			try {
 				// In case of FactoryBean, match object created by FactoryBean.
+				// 对于FactoryBean，请匹配FactoryBean创建的对象
+				// 如果beanName所指的对象属于FactoryBean实例
 				if (isFactoryBean(beanName)) {
+					//如果(包含非单例 或者 beanName所指的对象是单例) 且 beanName对应的Bean类型与type匹配
 					if ((includeNonSingletons || isSingleton(beanName)) && isTypeMatch(beanName, type)) {
+						//将beanName添加到result中
 						result.add(beanName);
 						// Match found for this bean: do not match FactoryBean itself anymore.
+						// 为此bean找到匹配项：不再匹配FactoryBean本身
 						continue;
 					}
 					// In case of FactoryBean, try to match FactoryBean itself next.
+					// 如果是FactoryBean,请尝试接下来匹配FactoryBean本身
 					beanName = FACTORY_BEAN_PREFIX + beanName;
 				}
 				// Match raw bean instance (might be raw FactoryBean).
+				//匹配原始bean实例（可能是原始FactoryBean)
+				//如果beanName对应的Bean类型与type匹配（此时的beanName有可能是FactoryBeany解引用名）
 				if (isTypeMatch(beanName, type)) {
+					//将beanName添加到result中
 					result.add(beanName);
 				}
 			}
+			//捕捉没有此类bean定义异常
 			catch (NoSuchBeanDefinitionException ex) {
 				// Shouldn't happen - probably a result of circular reference resolution...
+				// 不应该发生-可能是循环引用决议结果
+				//打印跟踪消息：无法检查名称为'beanName'的手动注册的单例
 				logger.trace(LogMessage.format(
 						"Failed to check manually registered singleton with name '%s'", beanName), ex);
 			}
 		}
-
+		//将result转换成Stirng数组返回出去
 		return StringUtils.toStringArray(result);
 	}
 
+	/**
+	 * <p>根据给定参数尽可能的判断所指bean是否为单例，判断依据如下：
+	 * 	<ol>
+	 * 	    <li>如果存在dbd【不为 null 】:就判断mbd是否单例并返回其结果</li>
+	 * 	    <li>否则判断beanName是否单例</li>
+	 * 	</ol>
+	 * </p>
+	 * @param beanName bean名
+	 * @param mbd  beanName对应的RootBeanDefinition，有可能是合并的RootBeanDefinition
+	 * @param dbd  mbd修饰的目标定义
+	 * @return
+	 */
 	private boolean isSingleton(String beanName, RootBeanDefinition mbd, @Nullable BeanDefinitionHolder dbd) {
+		//如果存在mbd修饰的目标定义，就判断beanName对应的RootBeanDefinition是否单例，是就返回true，否则返回false；
+		// 否则判断beanName是否单例，是就返回true；否则返回false
 		return (dbd != null ? mbd.isSingleton() : isSingleton(beanName));
 	}
 
 	/**
 	 * Check whether the specified bean would need to be eagerly initialized
 	 * in order to determine its type.
+	 * <p>检查是否需要急切初始化指定的bean以确定其类型,满足以下条件则认为需要急切初始化指定的bean以确定其类型<br/>
+	 *		<ol>
+	 *		 	<li>factoryBeanName确实是对应FactoryBean对象</li>
+	 *		 	<li>该工厂的注册器没有该factoryBean对象。</li>
+	 *		</ol>
+	 * </p>
+	 *
 	 * @param factoryBeanName a factory-bean reference that the bean definition
 	 * defines a factory method for
+	 * -- 一个工厂bean引用，该BeanDefinition定义了一个工厂方法
 	 * @return whether eager initialization is necessary
+	 * 		-- 是否急切的初始化时必要的
 	 */
 	private boolean requiresEagerInitForType(@Nullable String factoryBeanName) {
+		//fartoryBean引用名不为null 且 factoryBean引用名确实FactoryBean 且 该工厂的注册器注册器不包含factoryBean的单例实例 时
+		// 返回true，否则返回false
 		return (factoryBeanName != null && isFactoryBean(factoryBeanName) && !containsSingleton(factoryBeanName));
 	}
 
+	/**
+	 * 返回与给定类型（包括子类）匹配的bean名称，根据bean定义或getObjectType的 值判断(如果是FactoryBenas)
+	 * @param type the class or interface to match, or {@code null} for all concrete beans
+	 *             --要匹配的类或接口，或者对于所有具体的bean,{@code null}
+	 * @param <T> 要匹配的类型泛型
+	 * @return 一个具有匹配bean的Map，其中包含bena名称作为键名，并包含对于bean实例作为值。
+	 * @throws BeansException 如果无法创建一个bean
+	 * @see #getBeansOfType(Class, boolean, boolean)
+	 */
 	@Override
 	public <T> Map<String, T> getBeansOfType(@Nullable Class<T> type) throws BeansException {
 		return getBeansOfType(type, true, true);
 	}
 
+	/**
+	 * 返回与给定类型（包括子类）匹配的bean名称，根据bean定义或getObjectType的 值判断(如果是FactoryBeans):
+	 * <ol>
+	 *  <li>获取匹配type（包含子类）的bean（或由FactoryBean创建的对象）的所有名称【变量 beanNames】</li>
+	 *  <li>定义一个用于保存beanName和beanName所对应的实例对象的Map,长度为beanNames数组长度【变量result】</li>
+	 *  <li>遍历类型匹配的beanNames,元素为beanName:
+	 *   <ol>
+	 *     <li>获取beanNamed的实例对象【变量 beanInstance】</li>
+	 *     <li>如果实例对象不是NullBean,就将beanInstance与beanName绑定到result中</li>
+	 *     <li>捕捉bean创建异常【{@link BeanCreationException}】【变量 ex】:
+	 *      <ol>
+	 *       <li>获取ex的具体异常【变量 rootCause】</li>
+	 *       <li>如果具体异常 是 在引用当前正在创建的bean时引发异常【{@link BeanCurrentlyInCreationException}】:
+	 *        <ol>
+	 *         <li>将rootCause强转为BeanCreationException</li>
+	 *         <li>获取引发改异常的bean名【变量 exBeanName】</li>
+	 *         <li>如果exBeanName不为null 且 exBeanName正在创建:
+	 *          <ol>
+	 *           <li>如果日志级别是跟踪级别,打印跟踪日志：忽略与当前创建的bean的匹配 'exBeanName'</li>
+	 *           <li>将要注册的异常对象添加到 抑制异常列表【{@link #suppressedExceptions}】 中</li>
+	 *           <li>跳过本次循环</li>
+	 *          </ol>
+	 *         </li>
+	 *        </ol>
+	 *       </li>
+	 *       <li>重新抛出异常ex</li>
+	 *      </ol>
+	 *     </li>
+	 *   </ol>
+	 *  </li>
+	 *  <li>返回result</li>
+	 * </ol>
+	 * @param type the class or interface to match, or {@code null} for all concrete beans
+	 *             --要匹配的类或接口，或者对于所有具体的bean,{@code null}
+	 * @param <T> 要匹配的类型泛型
+	 * @return 一个具有匹配bean的Map，其中包含bena名称作为键名，并包含对于bean实例作为值。
+	 * @throws BeansException 如果无法创建一个bean
+	 * @see #getBeansOfType(Class, boolean, boolean)
+	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> Map<String, T> getBeansOfType(
 			@Nullable Class<T> type, boolean includeNonSingletons, boolean allowEagerInit) throws BeansException {
-
+		//获取匹配type（包含子类）的bean（或由FactoryBean创建的对象）的名称
 		String[] beanNames = getBeanNamesForType(type, includeNonSingletons, allowEagerInit);
+		//定义一个用于保存beanName和beanName所对应的实例对象的Map,长度为beanNames数组长度
 		Map<String, T> result = CollectionUtils.newLinkedHashMap(beanNames.length);
+		//遍历类型匹配的beanName
 		for (String beanName : beanNames) {
 			try {
+				//获取beanNamed的实例对象
 				Object beanInstance = getBean(beanName);
+				//如果实例对象不是NullBean
 				if (!(beanInstance instanceof NullBean)) {
+					//将实例对象与beanName绑定到result中
 					result.put(beanName, (T) beanInstance);
 				}
 			}
+			//捕捉bean创建异常
 			catch (BeanCreationException ex) {
+				//获取具体异常
 				Throwable rootCause = ex.getMostSpecificCause();
+				//BeanCurrentlyInCreationException：在引用当前正在创建的bean时引发异常。通常在构造函数自动装配与
+				// 当前构造的bean匹配时发生。
+				//如果具体异常 是 在引用当前正在创建的bean时引发异常
 				if (rootCause instanceof BeanCurrentlyInCreationException bce) {
+					//获取引发改异常的bean名
 					String exBeanName = bce.getBeanName();
+					//获取引发改异常的bean名
 					if (exBeanName != null && isCurrentlyInCreation(exBeanName)) {
 						if (logger.isTraceEnabled()) {
 							logger.trace("Ignoring match to currently created bean '" + exBeanName + "': " +
