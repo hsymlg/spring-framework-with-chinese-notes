@@ -240,15 +240,23 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	protected <T> T doGetBean(
 			String name, @Nullable Class<T> requiredType, @Nullable Object[] args, boolean typeCheckOnly)
 			throws BeansException {
-
+		//取指定 alias 所表示的最终 beanName，例如别名 A 指向名称为 B 的 bean 则返回 B;
+		//若别名 A 指向别名B，别名B又指向名称为 C 的 bean 则返回 C。
+		//如果是以&开头，那么就是FactoryBean,去掉开头的&符号
 		String beanName = transformedBeanName(name);
 		Object beanInstance;
 
 		// Eagerly check singleton cache for manually registered singletons.
+		// 这里先从缓存中获取或者从singletonFactories中的objectFactory中获取
+		//为什么会首先使用这段代码呢？
+		//因为在创建单例Bean的时候，会存在依赖注入的情况，而在创建依赖的时候，为了避免循环依赖,
+		//Spring 创建bean 的原则是不等Bean 创建完成就会将创建Bean的ObjectFactory 提前曝光，
+		// 也就是先将ObjectFactory 加入到缓存中，一旦下个Bean 创建时依赖上个bean ,则直接使用ObjectFactory
 		Object sharedInstance = getSingleton(beanName);
 		if (sharedInstance != null && args == null) {
 			if (logger.isTraceEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
+					// 日志打印，提示此Bean 还没有完全初始化，在一个循环引用中
 					logger.trace("Returning eagerly cached instance of singleton bean '" + beanName +
 							"' that is not fully initialized yet - a consequence of a circular reference");
 				}
@@ -256,20 +264,25 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					logger.trace("Returning cached instance of singleton bean '" + beanName + "'");
 				}
 			}
+			//返回对应的实例，这里的作用就是判断 对应的Bean 是不是FactoryBean类型，如果是 就通过调用对应的getObject() 方法，返回对应的实例，如果不是FactoryBean类型，直接返回
 			beanInstance = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
 
 		else {
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
+			// 如果是原型模型，存在循环依赖，那就直接报错，原型模型是不允许循环依赖的
 			if (isPrototypeCurrentlyInCreation(beanName)) {
 				throw new BeanCurrentlyInCreationException(beanName);
 			}
 
 			// Check if bean definition exists in this factory.
 			BeanFactory parentBeanFactory = getParentBeanFactory();
+			//如果父类工厂不为空，并且当前beanDefinitionMap 没有对应的beanName ，那就委托父类处理，
+			//以父工厂为准
 			if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
 				// Not found -> check parent.
+				// 获取最终name
 				String nameToLookup = originalBeanName(name);
 				if (parentBeanFactory instanceof AbstractBeanFactory abf) {
 					return abf.doGetBean(nameToLookup, requiredType, args, typeCheckOnly);
@@ -286,7 +299,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					return (T) parentBeanFactory.getBean(nameToLookup);
 				}
 			}
-
+			//如果不是仅仅做类型检查则是创建bean,这里进行记录，加入到alreadyCreated 里面，表示已经创建
 			if (!typeCheckOnly) {
 				markBeanAsCreated(beanName);
 			}
@@ -297,19 +310,28 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				if (requiredType != null) {
 					beanCreation.tag("beanType", requiredType::toString);
 				}
+				// 进行BeanDefinition 的转换为RootBeanDefinition  ，如果存在父类，就和父类的属性
+				//进行合并
 				RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
+				// 判断mbd 是否是 abstract的，如果是就报错
+				// 意味着不要实例化它本身，而仅用作具体子bean定义的父对象。
 				checkMergedBeanDefinition(mbd, beanName, args);
 
 				// Guarantee initialization of beans that the current bean depends on.
+				//判断是否有依赖的Bean ,如果有，先对依赖的Bean 进行创建
+				//代码里面有时想提前初始化的，都是加上@DependsOn
 				String[] dependsOn = mbd.getDependsOn();
 				if (dependsOn != null) {
 					for (String dep : dependsOn) {
+						// 判断是否循环依赖的情况，就是A Bean里面指定先要初始化B ，B里面指定先要初始化A这种情况
 						if (isDependent(beanName, dep)) {
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 									"Circular depends-on relationship between '" + beanName + "' and '" + dep + "'");
 						}
+						// 进行登记缓存对应的依赖关系
 						registerDependentBean(dep, beanName);
 						try {
+							// 先创建对应的依赖的Bean
 							getBean(dep);
 						}
 						catch (NoSuchBeanDefinitionException ex) {
@@ -320,7 +342,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				}
 
 				// Create bean instance.
+				// 创建单例模式
 				if (mbd.isSingleton()) {
+					//进行单例模式的创建
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
 							return createBean(beanName, mbd, args);
@@ -333,33 +357,41 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 							throw ex;
 						}
 					});
+					// 获取对应的实例
 					beanInstance = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
-
+				// 如果为原型模式
 				else if (mbd.isPrototype()) {
 					// It's a prototype -> create a new instance.
 					Object prototypeInstance = null;
 					try {
+						//创建之前操作
 						beforePrototypeCreation(beanName);
+						//进行创建
 						prototypeInstance = createBean(beanName, mbd, args);
 					}
 					finally {
+						// 创建之后的进行操作
 						afterPrototypeCreation(beanName);
 					}
+					// 获取对应的实例
 					beanInstance = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
 				}
-
+				// 其他类型如request 、session
 				else {
 					String scopeName = mbd.getScope();
 					if (!StringUtils.hasLength(scopeName)) {
 						throw new IllegalStateException("No scope name defined for bean '" + beanName + "'");
 					}
 					Scope scope = this.scopes.get(scopeName);
+					// 判断配置的模式，如果配置错了，直接抛错
 					if (scope == null) {
 						throw new IllegalStateException("No Scope registered for scope name '" + scopeName + "'");
 					}
+					// 这里的代码逻辑同上
 					try {
 						Object scopedInstance = scope.get(beanName, () -> {
+							// 创建之前的操作
 							beforePrototypeCreation(beanName);
 							try {
 								return createBean(beanName, mbd, args);
@@ -1858,11 +1890,20 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @see #registerDependentBean
 	 */
 	protected void registerDisposableBeanIfNecessary(String beanName, Object bean, RootBeanDefinition mbd) {
+		/** 不是原型模式，并且
+		 默认实现检查DisposableBean接口以及指定的destroy方法和已注册的DestructionAwareBeanPostProcessors。
+		 后续在销毁的时候 ，就可以运行后置处理相关的业务
+		 **/
 		if (!mbd.isPrototype() && requiresDestruction(bean, mbd)) {
 			if (mbd.isSingleton()) {
 				// Register a DisposableBean implementation that performs all destruction
 				// work for the given bean: DestructionAwareBeanPostProcessors,
 				// DisposableBean interface, custom destroy method.
+				/**
+				 注册一个DisposableBean实现，该实现执行给定bean的所有销毁工作：
+				 DestructionAwareBeanPostProcessors，DisposableBean接口，自定义destroy方法。
+				 主要就是 放入到 disposableBeans 里面
+				 **/
 				registerDisposableBean(beanName, new DisposableBeanAdapter(
 						bean, beanName, mbd, getBeanPostProcessorCache().destructionAware));
 			}
