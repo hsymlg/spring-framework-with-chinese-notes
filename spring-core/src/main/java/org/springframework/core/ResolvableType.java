@@ -79,6 +79,7 @@ import org.springframework.util.StringUtils;
  * @see #forType(Type)
  * @see #forInstance(Object)
  * @see ResolvableTypeProvider
+ * Spring 中大量使用反射，需要获取泛型的具体类型，为此专门提供了一个工具类解析泛型 - ResolvalbeType。ResolvableType 是对 Class，Field，Method 获取 Type 的抽象。
  */
 @SuppressWarnings("serial")
 public class ResolvableType implements Serializable {

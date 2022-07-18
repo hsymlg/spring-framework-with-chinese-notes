@@ -1251,17 +1251,24 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * and factory method type conversion.
 	 * @param registry the PropertyEditorRegistry to initialize
 	 */
+	// 用 被BeanFactory注册过的 自定义编辑器 对PropertyEditorRegistry 进行初始化
 	protected void registerCustomEditors(PropertyEditorRegistry registry) {
+		// 判断能否转成 实现类 PropertyEditorRegistrySupport
 		if (registry instanceof PropertyEditorRegistrySupport registrySupport) {
+			// 设置 configValueEditorsActive 属性为 true ,用于激活 配置值的编辑器
 			registrySupport.useConfigValueEditors();
 		}
+		// 如果存在 自定义 PropertyEditorRegistrar
 		if (!this.propertyEditorRegistrars.isEmpty()) {
+			// 遍历注册一遍
 			for (PropertyEditorRegistrar registrar : this.propertyEditorRegistrars) {
 				try {
 					registrar.registerCustomEditors(registry);
 				}
 				catch (BeanCreationException ex) {
 					Throwable rootCause = ex.getMostSpecificCause();
+					// 如果抛出的是 BeanCurrentlyInCreationException ，正在创建的异常，
+					// 先将 ex 转换为 BeanCreationException，再获取对应的bceBeanName
 					if (rootCause instanceof BeanCurrentlyInCreationException bce) {
 						String bceBeanName = bce.getBeanName();
 						if (bceBeanName != null && isCurrentlyInCreation(bceBeanName)) {
@@ -1270,6 +1277,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 										"] failed because it tried to obtain currently created bean '" +
 										ex.getBeanName() + "': " + ex.getMessage());
 							}
+							// 加入 suppressedExceptions 列表，并跳过
 							onSuppressedException(ex);
 							continue;
 						}
@@ -1278,7 +1286,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				}
 			}
 		}
+		// 如果存在自定义 PropertyEditors
 		if (!this.customEditors.isEmpty()) {
+			// 遍历进行注册 CustomEditor
 			this.customEditors.forEach((requiredType, editorClass) ->
 					registry.registerCustomEditor(requiredType, BeanUtils.instantiateClass(editorClass)));
 		}
