@@ -1337,7 +1337,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 */
 	protected RootBeanDefinition getMergedLocalBeanDefinition(String beanName) throws BeansException {
 		// Quick check on the concurrent map first, with minimal locking.
-		// 判断缓存mergedBeanDefinitions 是否包含beanName 对应的 数据
+		// 判断缓存mergedBeanDefinitions 是否包含beanName 对应的数据
 		RootBeanDefinition mbd = this.mergedBeanDefinitions.get(beanName);
 		if (mbd != null && !mbd.stale) {
 			return mbd;
@@ -1855,9 +1855,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			mbd.isFactoryBean = true;
 		}
 		else {
-			//从 缓存factoryBeanObjectCache 里面获取
+			//从缓存factoryBeanObjectCache 里面获取对应的实例
 			object = getCachedObjectForFactoryBean(beanName);
 		}
+		//缓存中存在实例的话直接返回，否则进入下面条件
 		if (object == null) {
 			// Return bean instance from factory.
 			// Caches object obtained from FactoryBean if it is a singleton.
