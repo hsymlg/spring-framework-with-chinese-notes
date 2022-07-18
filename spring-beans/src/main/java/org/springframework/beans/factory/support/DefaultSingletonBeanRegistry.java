@@ -84,12 +84,9 @@ import org.springframework.util.StringUtils;
  * 这个类中，使用了三个主要的存储器（map）来分别存储singletonObject，singletonFactory，earlySingletonObject。
  * 当注册一个singleton object的时候，会在 singletonObject 的存储器中加入此 object，而在其他的两个存储器中移除。当然，这样的行为是可以在子类中去复写的。
  * 在 getSingleton的时候，spring的默认实现是，先从 singleton object 的存储器中去寻找，如果找不到，再从 early singleton object 存储器中寻找，
- * 再找不到，那就在寻找对应的 singleton factory，造出所需的 singleton object，然后返回。而 contains singleton 就是直接检查 singleton object 存储器了，其他的存储器不做检查。
+ * 再找不到，那就在寻找对应的 singleton factory，造出所需的 singleton object，然后返回，并将这个对象缓存到 earlySingletonObjects 里面 以便后续使用，并从singletonFactories 除去对应的BeanName。
+ * 而 contains singleton 就是直接检查 singleton object 存储器了，其他的存储器不做检查。
  * 而 get singleton counts 也是统计 singleton object 的数量。
- * 看完了代码，再仔细想想，为什么这个类要使用三个存储器呢？
- * 我想， singletonObjects 就是直观的存储着 singleton 的，而 singletonFactories 是存储的制造 singleton 的工厂，还有一个 earlySingletonObject，
- * 在看了代码之后，我更觉得这是一个 早期singletonFactory 制造出来的 singleton 的缓存。
- *
  */
 public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements SingletonBeanRegistry {
 
@@ -98,15 +95,16 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 
 	/** Cache of singleton objects: bean name to bean instance. */
-	//是存放singleton对象的缓存
+	//是存放singleton对象的缓存，Bean Name --> Bean instance
 	private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
 
 	/** Cache of singleton factories: bean name to ObjectFactory. */
-	// 是存放制造singleton的工厂对象的缓存
+	// 是存放制造singleton的工厂对象的缓存， BeanName -->ObjectFactory
 	private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
 
 	/** Cache of early singleton objects: bean name to bean instance. */
-	//是存放singletonFactory 制造出来的 singleton 的缓存早期单例对象缓存
+	//是存放singletonFactory 制造出来的 singleton 的缓存早期单例对象缓存，也是保存 BeanName 和创建 bean instance 之间的关系，与
+	//singletonObjects的不同之处在于，当一个单例 bean 被放到这里面后，那么当 bean 还 在创建过程中，就可以通过 getBean方法获取到了， 其目的是用来检测循环引用
 	private final Map<String, Object> earlySingletonObjects = new ConcurrentHashMap<>(16);
 
 	/** Set of registered singletons, containing the bean names in registration order. */
@@ -149,7 +147,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	private final Map<String, Set<String>> dependenciesForBeanMap = new ConcurrentHashMap<>(64);
 
 
-	// SingletonBeanRegistry接口的registerSingleton方法的实现
+	//SingletonBeanRegistry接口的registerSingleton方法的实现
 	@Override
 	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
 		Assert.notNull(beanName, "Bean name must not be null");
@@ -228,7 +226,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		// 如果singletonObjects指定beanName的对象是不存在的
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
 			singletonObject = this.earlySingletonObjects.get(beanName);
-			// 如果earlySingletonObjects指定的beanName的对象是不存在的且allowEarlyReference是允许的
+			// 如果earlySingletonObjects指定的beanName的对象是不存在的且allowEarlyReference（提前依赖）是允许的
 			if (singletonObject == null && allowEarlyReference) {
 				synchronized (this.singletonObjects) {
 					// Consistent creation of early reference within full singleton lock
@@ -238,12 +236,13 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 						// singletonFactory创建指定的单例对象
 						singletonObject = this.earlySingletonObjects.get(beanName);
 						if (singletonObject == null) {
+							//获取对应的ObjectFactory，调用其getOjbect() 方法进行Bean的创建
 							ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 							if (singletonFactory != null) {
 								singletonObject = singletonFactory.getObject();
-								// 这里可以看出earlySingletonObjects缓存应该是存放singletonFactory产生的singleton
+								//将创建的Bean 实例 放入到 earlySingletonObjects 里面
 								this.earlySingletonObjects.put(beanName, singletonObject);
-								// 这里表示指定的beanName已被占用，所以要在singletonFactories移除该名称
+								// 将beanName 从singletonFactories 里面移除
 								this.singletonFactories.remove(beanName);
 							}
 						}
