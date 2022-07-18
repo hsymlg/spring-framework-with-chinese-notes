@@ -495,6 +495,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Make sure bean class is actually resolved at this point, and
 		// clone the bean definition in case of a dynamically resolved Class
 		// which cannot be stored in the shared merged bean definition.
+		//首先确定对应的class 已经解析好了,就是用classLoader 或者 class.forName 对定义的类名进行加载，
+		//并把解析好的类保存带BeanDefinition 里面，以供后面使用里面还对 SPEL语言支持
+		//这个方法主要是解析 bean definition 的 class 类，并将已经解析的 Class 存储在 bean definition 中以供后面使用。
+		//这样做的主要目的是动态解析的 class 是无法保存到共享的 BeanDefinition 中。
 		Class<?> resolvedClass = resolveBeanClass(mbd, beanName);
 		if (resolvedClass != null && !mbd.hasBeanClass() && mbd.getBeanClassName() != null) {
 			mbdToUse = new RootBeanDefinition(mbd);
@@ -502,7 +506,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		// Prepare method overrides.
+		// 验证以及准备覆盖的方法
 		try {
+			// 验证并准备为此bean定义的方法覆盖。检查是否存在具有指定名称的方法。
+			//这里 主要是处理配置了lookup-method，replace-method两种依赖注入的方式，
+			// 下面有详细的方法解释
 			mbdToUse.prepareMethodOverrides();
 		}
 		catch (BeanDefinitionValidationException ex) {
@@ -512,6 +520,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		try {
 			// Give BeanPostProcessors a chance to return a proxy instead of the target bean instance.
+			//给 BeanPostProcessors 一个机会来返回代用来代替真正的实例
 			Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
 			if (bean != null) {
 				return bean;
@@ -523,6 +532,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		try {
+			// 进行创建
 			Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 			if (logger.isTraceEnabled()) {
 				logger.trace("Finished creating instance of bean '" + beanName + "'");

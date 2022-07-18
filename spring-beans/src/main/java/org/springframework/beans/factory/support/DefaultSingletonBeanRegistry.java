@@ -486,6 +486,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param beanName the name of the bean
 	 * @param dependentBeanName the name of the dependent bean
 	 */
+	// 这里是进行加入缓存，以便下次使用
 	public void registerDependentBean(String beanName, String dependentBeanName) {
 		String canonicalName = canonicalName(beanName);
 
@@ -512,20 +513,26 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @since 4.0
 	 */
 	protected boolean isDependent(String beanName, String dependentBeanName) {
+		//先锁住
 		synchronized (this.dependentBeanMap) {
 			return isDependent(beanName, dependentBeanName, null);
 		}
 	}
 
 	private boolean isDependent(String beanName, String dependentBeanName, @Nullable Set<String> alreadySeen) {
+		// 如果alreadySeen 不为空，并且已经包含了 beanName 就返回false
 		if (alreadySeen != null && alreadySeen.contains(beanName)) {
 			return false;
 		}
+		// 将beanName 转为最终的name
 		String canonicalName = canonicalName(beanName);
+		// 从dependentBeanMap 获取对应的已经存在的依赖关系
 		Set<String> dependentBeans = this.dependentBeanMap.get(canonicalName);
+		// 如果为null,直接返回
 		if (dependentBeans == null) {
 			return false;
 		}
+		// 如果包含，返回true
 		if (dependentBeans.contains(dependentBeanName)) {
 			return true;
 		}
@@ -534,6 +541,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				alreadySeen = new HashSet<>();
 			}
 			alreadySeen.add(beanName);
+			// 迭代循环进行判断
 			if (isDependent(transitiveDependency, dependentBeanName, alreadySeen)) {
 				return true;
 			}
