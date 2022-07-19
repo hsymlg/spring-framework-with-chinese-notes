@@ -518,6 +518,30 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		}
 	}
 
+	//其实是一个有向图的深度遍历算法，转化为有向图是否存在环的问题。
+	//isDependent方法参数传入两个节点，如果有环返回true，否则返回false
+	/*
+	->符号记为一个有向的连接，注意Map<String, Set<String>> dependentBeanMap中的value是指向key的
+	我们尝试连接A->B,那么以下两种情况可判断为有环：
+		1.如果有B->A,
+		2.存在某个X->A使B->X。
+		 算法采用一个map来存某个节点的所有前驱节点，以下是伪代码描述
+
+		// 尝试A->B,如果存在B->A返回true
+		isDependent(String A, String B, Set<String> alreadySeen) {
+		        if alreadySeen.Has(A) then // 略过所有已访问过的前驱
+		            return false;
+		        if map = null then
+		            return false;
+		        if map.get(A).has(B) then // 如果有B->A则有环
+		            return true;
+		       for X in map.get(A)// 寻找A的所有前驱,X->A
+		            if isDependent(X,B) then // 如果有B->X则有环
+		       return true;
+		       alreadySeen.add(A)// 标记为已访问
+		       return false;
+		}
+	 */
 	private boolean isDependent(String beanName, String dependentBeanName, @Nullable Set<String> alreadySeen) {
 		// 如果alreadySeen 不为空，并且已经包含了 beanName 就返回false
 		if (alreadySeen != null && alreadySeen.contains(beanName)) {
@@ -535,6 +559,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		if (dependentBeans.contains(dependentBeanName)) {
 			return true;
 		}
+		//有其他的依赖关系，但是当前beanname不存在，就遍历，把当前beanname放到
 		for (String transitiveDependency : dependentBeans) {
 			if (alreadySeen == null) {
 				alreadySeen = new HashSet<>();
