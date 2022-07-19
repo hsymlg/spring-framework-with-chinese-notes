@@ -246,13 +246,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		String beanName = transformedBeanName(name);
 		Object beanInstance;
 
-		// Eagerly check singleton cache for manually registered singletons.
+		//Eagerly check singleton cache for manually registered singletons.
 		//这里先从缓存中获取或者从singletonFactories中的objectFactory中获取
 		//为什么会首先使用这段代码呢？
 		//因为在创建单例Bean的时候，会存在依赖注入的情况，而在创建依赖的时候，为了避免循环依赖,
 		//Spring 创建Bean的原则是不等Bean创建完成就会将创建Bean的ObjectFactory提前曝光，
 		//也就是先将ObjectFactory 加入到缓存中，一旦下个Bean 创建时依赖上个bean ,则直接使用ObjectFactory
 		Object sharedInstance = getSingleton(beanName);
+		//第一次进入sharedInstance肯定为null
 		if (sharedInstance != null && args == null) {
 			if (logger.isTraceEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
@@ -267,7 +268,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			//返回对应的实例，这里的作用就是判断 对应的Bean是不是FactoryBean类型，如果是 就通过调用对应的getObject() 方法，返回对应的实例，如果不是FactoryBean类型，直接返回
 			beanInstance = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
-
+		// 如果sharedInstance不为null,也就是非第一次进入
 		else {
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
@@ -277,6 +278,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			// Check if bean definition exists in this factory.
+			// 获取父BeanFactory,一般情况下,父BeanFactory为null,如果存在父BeanFactory,就先去父级容器去查找
 			BeanFactory parentBeanFactory = getParentBeanFactory();
 			//如果父类工厂不为空，并且当前beanDefinitionMap 没有对应的beanName ，那就委托父类处理，
 			//以父工厂为准
@@ -301,6 +303,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 			//如果不是仅仅做类型检查则是创建bean,这里进行记录，加入到alreadyCreated 里面，表示已经创建
 			if (!typeCheckOnly) {
+				// 标记 bean 已经被创建
 				markBeanAsCreated(beanName);
 			}
 
