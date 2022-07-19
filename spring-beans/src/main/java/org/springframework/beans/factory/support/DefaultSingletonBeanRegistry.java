@@ -485,21 +485,24 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param beanName the name of the bean
 	 * @param dependentBeanName the name of the dependent bean
 	 */
-	// 这里是进行加入缓存，以便下次使用
+	// 这里是进行加入缓存，以便下次使用，里面的两个map为有向图的相反方向的相邻层级
 	public void registerDependentBean(String beanName, String dependentBeanName) {
 		String canonicalName = canonicalName(beanName);
-
+		//先从容器中：bean名称-->全部依赖Bean名称集合找查找给定名称Bean的依赖Bean
 		synchronized (this.dependentBeanMap) {
 			Set<String> dependentBeans =
 					this.dependentBeanMap.computeIfAbsent(canonicalName, k -> new LinkedHashSet<>(8));
+			//向容器中：bean名称-->全部依赖Bean名称集合添加Bean的依赖信息
 			if (!dependentBeans.add(dependentBeanName)) {
 				return;
 			}
 		}
-
+		//从容器中：bean名称-->指定名称Bean的依赖Bean集合找查找给定名称
 		synchronized (this.dependenciesForBeanMap) {
 			Set<String> dependenciesForBean =
 					this.dependenciesForBeanMap.computeIfAbsent(dependentBeanName, k -> new LinkedHashSet<>(8));
+			//向容器中：bean名称-->指定Bean的依赖Bean名称集合添加Bean的依赖信息
+			//即，将Bean所依赖的Bean添加到容器的集合中
 			dependenciesForBean.add(canonicalName);
 		}
 	}
