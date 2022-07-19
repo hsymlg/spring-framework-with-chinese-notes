@@ -1870,6 +1870,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 			// 判断此RootBeanDefinition 是否是合成的（被动态代理过）
 			boolean synthetic = (mbd != null && mbd.isSynthetic());
+			//从给定的factory中获取暴露的object
 			object = getObjectFromFactoryBean(factoryBean, beanName, !synthetic);
 		}
 		return object;

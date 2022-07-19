@@ -96,7 +96,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 				Object object = this.factoryBeanObjectCache.get(beanName);
 				//这里表示没有拿到
 				if (object == null) {
-					//实质还是去调用getObject()去拿,这里分装了一层
+					//实质还是去调用getObject()去拿,这里封装了一层
 					object = doGetObjectFromFactoryBean(factory, beanName);
 					// Only post-process and store if not put there already during getObject() call above
 					// (e.g. because of circular reference processing triggered by custom getBean calls)
@@ -110,7 +110,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 						if (shouldPostProcess) {
 							//通过传入的beanName来判断当前bean是否正在创建中
 							if (isSingletonCurrentlyInCreation(beanName)) {
-								// Temporarily return non-post-processed object, not storing it yet..
+								//Temporarily return non-post-processed object, not storing it yet..
 								//这里返回的是临时的非后置处理的object,并不保存它
 								return object;
 							}
