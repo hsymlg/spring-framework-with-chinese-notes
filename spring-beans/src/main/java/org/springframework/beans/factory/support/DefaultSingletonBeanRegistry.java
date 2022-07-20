@@ -265,7 +265,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		Assert.notNull(beanName, "Bean name must not be null");
 		synchronized (this.singletonObjects) {
 			Object singletonObject = this.singletonObjects.get(beanName);
-			// 如果singetonObjects缓存不存在名称为beanName的对象
+			// 如果singetonObjects缓存中不存在名称为beanName的对象
 			if (singletonObject == null) {
 				// 如果目前在销毁singellton
 				if (this.singletonsCurrentlyInDestruction) {
@@ -276,7 +276,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (logger.isDebugEnabled()) {
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
-				// 单例对象创建前的回调,默认实现注册正在创建的单例
+				// 单例对象创建前的回调,注册到（singletonsCurrentlyInCreation）
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
 				// 判断存储异常相关原因的集合是否已存在
