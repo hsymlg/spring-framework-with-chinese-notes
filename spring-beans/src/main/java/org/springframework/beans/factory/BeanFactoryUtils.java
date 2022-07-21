@@ -83,6 +83,7 @@ public abstract class BeanFactoryUtils {
 		if (!name.startsWith(BeanFactory.FACTORY_BEAN_PREFIX)) {
 			return name;
 		}
+		//若map中的key对应的value为空，会将第二个参数的返回值存入并返回
 		return transformedBeanNameCache.computeIfAbsent(name, beanName -> {
 			do {
 				beanName = beanName.substring(BeanFactory.FACTORY_BEAN_PREFIX.length());

@@ -251,6 +251,7 @@ public class SimpleAliasRegistry implements AliasRegistry {
 				canonicalName = resolvedName;
 			}
 		}
+		//循环结束的条件是resolvedName == null，也就是aliasMap中找不到对应的名字了
 		while (resolvedName != null);
 		return canonicalName;
 	}

@@ -240,9 +240,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	protected <T> T doGetBean(
 			String name, @Nullable Class<T> requiredType, @Nullable Object[] args, boolean typeCheckOnly)
 			throws BeansException {
-		//取指定 alias 所表示的最终 beanName，例如别名 A 指向名称为 B 的 bean 则返回 B;
-		//若别名 A 指向别名B，别名B又指向名称为 C 的 bean 则返回 C。
-		//如果是以&开头，那么就是FactoryBean,去掉开头的&符号
+		//取指定 alias 所表示的最终 beanName
 		String beanName = transformedBeanName(name);
 		Object beanInstance;
 
@@ -1249,6 +1247,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @return the transformed bean name
 	 */
 	protected String transformedBeanName(String name) {
+		//transformedBeanName方法就是把带&的name去掉之后放到缓存中记录并返回
+		//canonicalName方法通过一个do-while实现了从aliasMap中获取到最终的name
 		return canonicalName(BeanFactoryUtils.transformedBeanName(name));
 	}
 
