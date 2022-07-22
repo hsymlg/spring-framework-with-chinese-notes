@@ -249,6 +249,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				}
 			}
 		}
+		//注意这边返回值最终只有singletonFactories中没有对应的ObjectFactory才会返回null，也就是没有经过docreateBean方法
 		return singletonObject;
 	}
 
