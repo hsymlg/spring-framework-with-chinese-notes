@@ -39,6 +39,7 @@ import org.springframework.lang.Nullable;
 public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanRegistry {
 
 	/** Cache of singleton objects created by FactoryBeans: FactoryBean name to object. */
+	//缓存factoryBean包裹的Object对象
 	private final Map<String, Object> factoryBeanObjectCache = new ConcurrentHashMap<>(16);
 
 
@@ -92,7 +93,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 		//先就是简单的判断,是否是单例和包含该单例bean
 		if (factory.isSingleton() && containsSingleton(beanName)) {
 			synchronized (getSingletonMutex()) {
-				//先从缓存中去拿
+				//从FactoryBean创建的单例对象的缓存中获取该bean实例
 				Object object = this.factoryBeanObjectCache.get(beanName);
 				//这里表示没有拿到
 				if (object == null) {
@@ -102,6 +103,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 					// (e.g. because of circular reference processing triggered by custom getBean calls)
 					//处理了仅有doGetObjectFromFactoryBean调用getObject()期间保存时需要进行后置处理,如循环引用的问题
 					Object alreadyThere = this.factoryBeanObjectCache.get(beanName);
+					//如果该beanName已经在缓存中存在，则将object替换成缓存中的
 					if (alreadyThere != null) {
 						object = alreadyThere;
 					}
@@ -118,6 +120,8 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 							beforeSingletonCreation(beanName);
 							try {
 								//对object进行后置处理,如果在FactoryBean找不到该object抛如下异常
+								//对bean实例进行后置处理，执行所有已注册的BeanPostProcessor的postProcessAfterInitialization方法
+								//此方法会进行AOP代理增强，所以我们在写AOP增强的时候，不只是会增强FactoryBean本身，还会增强FactoryBean所包裹的对象
 								object = postProcessObjectFromFactoryBean(object, beanName);
 							}
 							catch (Throwable ex) {
