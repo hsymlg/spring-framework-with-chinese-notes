@@ -85,8 +85,6 @@ import org.springframework.util.StringUtils;
  * 当注册一个singleton object的时候，会在 singletonObject 的存储器中加入此 object，而在其他的两个存储器中移除。当然，这样的行为是可以在子类中去复写的。
  * 在 getSingleton的时候，spring的默认实现是，先从 singleton object 的存储器中去寻找，如果找不到，再从 early singleton object 存储器中寻找，
  * 再找不到，那就在寻找对应的 singleton factory，造出所需的 singleton object，然后返回，并将这个对象缓存到 earlySingletonObjects 里面 以便后续使用，并从singletonFactories 除去对应的BeanName。
- * 而 contains singleton 就是直接检查 singleton object 存储器了，其他的存储器不做检查。
- * 而 get singleton counts 也是统计 singleton object 的数量。
  */
 public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements SingletonBeanRegistry {
 
@@ -204,10 +202,10 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		}
 	}
 
-	// SingletonBeanRegistry接口的getSingleton方法的实现
 	@Override
 	@Nullable
 	public Object getSingleton(String beanName) {
+		//参数 true 设置标识允许时期依赖
 		return getSingleton(beanName, true);
 	}
 
@@ -215,25 +213,26 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * Return the (raw) singleton object registered under the given name.
 	 * <p>Checks already instantiated singletons and also allows for an early
 	 * reference to a currently created singleton (resolving a circular reference).
+	 * 先从 singleton object 的存储器中去寻找，如果找不到，再从 early singleton object 存储器中寻找，
+	 * 再找不到，那就在寻找对应的 singleton factory，造出所需的 singleton object，然后返回，
+	 * 并将这个对象缓存到 earlySingletonObjects 里面 以便后续使用，并从singletonFactories 除去对应的BeanName。
 	 * @param beanName the name of the bean to look for
 	 * @param allowEarlyReference whether early references should be created or not
 	 * @return the registered singleton object, or {@code null} if none found
 	 */
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
-		// Quick check for existing instance without full singleton lock
+		//在已经创建完成的 singletonObjects 集合中查找
 		Object singletonObject = this.singletonObjects.get(beanName);
-		// 如果singletonObjects指定beanName的对象是不存在的
+		//如果这个bean正在创建，则继续尝试从 earlySingletonObjects 中查找
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
 			singletonObject = this.earlySingletonObjects.get(beanName);
 			// 如果earlySingletonObjects指定的beanName的对象是不存在的且allowEarlyReference（提前依赖）是允许的
 			if (singletonObject == null && allowEarlyReference) {
 				synchronized (this.singletonObjects) {
-					// Consistent creation of early reference within full singleton lock
+					// 在所有singletonObjects被锁住的情况下，再去singletonObjects，earlySingletonObjects找，没有就去singletonFactories创建
 					singletonObject = this.singletonObjects.get(beanName);
-					// 如果存在指定beanName的singletonFactory对象
 					if (singletonObject == null) {
-						// singletonFactory创建指定的单例对象
 						singletonObject = this.earlySingletonObjects.get(beanName);
 						if (singletonObject == null) {
 							//获取对应的ObjectFactory，调用其getOjbect() 方法进行Bean的创建
@@ -242,7 +241,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 								singletonObject = singletonFactory.getObject();
 								//将创建的Bean 实例 放入到 earlySingletonObjects 里面
 								this.earlySingletonObjects.put(beanName, singletonObject);
-								// 将beanName 从singletonFactories 里面移除
+								// 将beanName 从singletonFactories 里面移除（singletonFactories中的ObjectFactory是在docreateBean中创建的）
 								this.singletonFactories.remove(beanName);
 							}
 						}
