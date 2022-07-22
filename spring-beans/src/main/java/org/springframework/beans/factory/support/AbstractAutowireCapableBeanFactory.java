@@ -571,6 +571,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		BeanWrapper instanceWrapper = null;
 		// 如果定义的是单例模式，就先从缓存中清除
 		if (mbd.isSingleton()) {
+			//remove方法返回的是删除的值
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
 		}
 		// 如果 instanceWrapper  为空，那就 创建对应的beanInstance,具体方法在下面小节分析
