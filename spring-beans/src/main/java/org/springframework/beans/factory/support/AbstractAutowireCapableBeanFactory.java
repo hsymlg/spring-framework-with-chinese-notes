@@ -567,17 +567,22 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected Object doCreateBean(String beanName, RootBeanDefinition mbd, @Nullable Object[] args)
 			throws BeanCreationException {
 
-		// Instantiate the bean.
+		// BeanWrapper 是用来持有创建出来的Bean对象
 		BeanWrapper instanceWrapper = null;
-		// 如果定义的是单例模式，就先从缓存中清除
+		// 如果定义的是单例模式，先清除缓存中同名的Bean
 		if (mbd.isSingleton()) {
 			//remove方法返回的是删除的值
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
 		}
-		// 如果 instanceWrapper  为空，那就 创建对应的beanInstance,具体方法在下面小节分析
 		if (instanceWrapper == null) {
+			/*
+			 * 通过createBeanInstance 来完成Bean所包含的java对象的创建。
+			 * 对象的生成有很多种不同的方式，可以通过工厂方法生成，
+			 * 也可以通过容器的autowire特性生成，这些生成方式都是由BeanDefinition来指定的
+			 */
 			instanceWrapper = createBeanInstance(beanName, mbd, args);
 		}
+		/* getWrappedInstance() 获得原生对象*/
 		Object bean = instanceWrapper.getWrappedInstance();
 		Class<?> beanType = instanceWrapper.getWrappedClass();
 		if (beanType != NullBean.class) {
@@ -1423,6 +1428,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	@SuppressWarnings("deprecation")  // for postProcessPropertyValues
 	protected void populateBean(String beanName, RootBeanDefinition mbd, @Nullable BeanWrapper bw) {
+		// 1、判断实例是否为空
 		if (bw == null) {
 			if (mbd.hasPropertyValues()) {
 				throw new BeanCreationException(
@@ -1430,6 +1436,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 			else {
 				// Skip property population phase for null instance.
+				// 空对象不进行属性注入
 				return;
 			}
 		}
@@ -1445,8 +1452,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 
+		// 默认情况下这里的PropertyValues是空的，但可以自定义BeanFactory后置处理器，
+		// 来修改bean定义，填充属性
 		PropertyValues pvs = (mbd.hasPropertyValues() ? mbd.getPropertyValues() : null);
 
+		// 判断自动注入模式，使用xml时会在这里进行属性注入，这里的逻辑可以看xml方式的解析
+		// 但对于使用@Autowire来说，bean定义的autowireMode是NO，所以不会走这里的逻辑
 		int resolvedAutowireMode = mbd.getResolvedAutowireMode();
 		if (resolvedAutowireMode == AUTOWIRE_BY_NAME || resolvedAutowireMode == AUTOWIRE_BY_TYPE) {
 			MutablePropertyValues newPvs = new MutablePropertyValues(pvs);
@@ -1461,10 +1472,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			pvs = newPvs;
 		}
 
+		// hasInstantiationAwareBeanPostProcessors属性是否是true
+		// 即是否注册了InstantiationAwareBeanPostProcessor类型的bean后置处理器
 		boolean hasInstAwareBpps = hasInstantiationAwareBeanPostProcessors();
+		// 是否需要依赖检查
 		boolean needsDepCheck = (mbd.getDependencyCheck() != AbstractBeanDefinition.DEPENDENCY_CHECK_NONE);
 
 		if (hasInstAwareBpps) {
+			// 如果pvs是空的，则创建一个MutablePropertyValues
 			if (pvs == null) {
 				pvs = mbd.getPropertyValues();
 			}
