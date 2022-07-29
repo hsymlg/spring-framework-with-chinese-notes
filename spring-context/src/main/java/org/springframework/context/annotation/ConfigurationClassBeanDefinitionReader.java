@@ -132,6 +132,7 @@ class ConfigurationClassBeanDefinitionReader {
 	/**
 	 * Read a particular {@link ConfigurationClass}, registering bean definitions
 	 * for the class itself and all of its {@link Bean} methods.
+	 * 在解析完配置类后会加载BeanDefinition
 	 */
 	private void loadBeanDefinitionsForConfigurationClass(
 			ConfigurationClass configClass, TrackedConditionEvaluator trackedConditionEvaluator) {
@@ -379,6 +380,8 @@ class ConfigurationClassBeanDefinitionReader {
 		});
 	}
 
+	//该方法最后会调用
+	//此时会调用MapperScannerRegistrar的registerBeanDefinitions方法，在该方法里会将MapperScannerConfigurer的DeanDefinition注入到spring容器中
 	private void loadBeanDefinitionsFromRegistrars(Map<ImportBeanDefinitionRegistrar, AnnotationMetadata> registrars) {
 		registrars.forEach((registrar, metadata) ->
 				registrar.registerBeanDefinitions(metadata, this.registry, this.importBeanNameGenerator));

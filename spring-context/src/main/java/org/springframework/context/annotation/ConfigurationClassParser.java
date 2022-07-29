@@ -306,6 +306,7 @@ class ConfigurationClassParser {
 			}
 		}
 
+		//在ConfigurationClassPostProcessor解析配置类的过程中，解析@Import标签
 		// Process any @Import annotations
 		processImports(configClass, sourceClass, getImports(sourceClass), filter, true);
 
@@ -585,6 +586,7 @@ class ConfigurationClassParser {
 					else if (candidate.isAssignable(ImportBeanDefinitionRegistrar.class)) {
 						// Candidate class is an ImportBeanDefinitionRegistrar ->
 						// delegate to it to register additional bean definitions
+						//碰到ImportBeanDefinitionRegistrar类型的DeanDefinition会存入到配置类中
 						Class<?> candidateClass = candidate.loadClass();
 						ImportBeanDefinitionRegistrar registrar =
 								ParserStrategyUtils.instantiateClass(candidateClass, ImportBeanDefinitionRegistrar.class,
