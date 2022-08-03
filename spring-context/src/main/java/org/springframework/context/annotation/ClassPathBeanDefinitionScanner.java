@@ -161,11 +161,13 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 
 		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
 		this.registry = registry;
-
+		//useDefaultFilters的值默认为true
 		if (useDefaultFilters) {
 			registerDefaultFilters();
 		}
+		//设置对应的环境
 		setEnvironment(environment);
+		//设置对应的资源的加载器，主要是用来加载指定包名下的所有的class
 		setResourceLoader(resourceLoader);
 	}
 

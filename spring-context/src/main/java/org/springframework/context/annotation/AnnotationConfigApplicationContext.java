@@ -52,6 +52,14 @@ import org.springframework.util.Assert;
  * @see AnnotatedBeanDefinitionReader
  * @see ClassPathBeanDefinitionScanner
  * @see org.springframework.context.support.GenericXmlApplicationContext
+ * 使用方式如下
+ * main方法：
+ * AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
+ * AppConfig类：
+ * @Configuration
+ * @ComponentScan("com.ys.annotationConfigApplicationContextTest")
+ * public class AppConfig {
+ * }
  */
 public class AnnotationConfigApplicationContext extends GenericApplicationContext implements AnnotationConfigRegistry {
 
@@ -86,8 +94,10 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * from the given component classes and automatically refreshing the context.
 	 * @param componentClasses one or more component classes &mdash; for example,
 	 * {@link Configuration @Configuration} classes
+	 * 这个方法是new AnnotationConfigApplicationContext(AppConfig.class)的入口
 	 */
 	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
+		//先跑无参构造器的逻辑，初始化一些processor去beanDefinitionMap中去
 		this();
 		register(componentClasses);
 		refresh();
@@ -159,6 +169,7 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * {@link Configuration @Configuration} classes
 	 * @see #scan(String...)
 	 * @see #refresh()
+	 * 注册一个BeanDefinition到Spring的容器中去
 	 */
 	@Override
 	public void register(Class<?>... componentClasses) {

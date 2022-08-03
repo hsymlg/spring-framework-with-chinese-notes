@@ -200,10 +200,11 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 * {@link Controller @Controller} stereotype annotations.
 	 * <p>Also supports Jakarta EE's {@link jakarta.annotation.ManagedBean} and
 	 * JSR-330's {@link jakarta.inject.Named} annotations, if available.
-	 *
+	 * 这个方法中添加了哪些注解会扫描出来，还有就是哪些注解不会扫描出来
 	 */
 	@SuppressWarnings("unchecked")
 	protected void registerDefaultFilters() {
+		//要扫描的注解
 		this.includeFilters.add(new AnnotationTypeFilter(Component.class));
 		ClassLoader cl = ClassPathScanningCandidateComponentProvider.class.getClassLoader();
 		try {
