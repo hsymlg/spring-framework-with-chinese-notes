@@ -81,6 +81,11 @@ abstract class ConfigurationClassUtils {
 	 * @param beanDef the bean definition to check
 	 * @param metadataReaderFactory the current factory in use by the caller
 	 * @return whether the candidate qualifies as (any kind of) configuration class
+	 * 如果是实现AnnotatedBeanDefinition的BeanDefinition或者是AbstractBeanDefinition但不是BeanFactoryPostProcessor、
+	 * BeanPostProcessor、AopInfrastructureBean、 EventListenerFactory，
+	 * 再或者是自己实现的BeanDefinition添加到BeanDefinitionMap中的BeanDefinition就不会返回false然后进行第二次筛选，
+	 * 如果是添加了Configuration注解的类是不会返回false的，
+	 * 还有种就是isConfigurationCandidate(metadata)方法的返回值不为false的，也是不会返回false的
 	 */
 	public static boolean checkConfigurationClassCandidate(
 			BeanDefinition beanDef, MetadataReaderFactory metadataReaderFactory) {
@@ -161,14 +166,18 @@ abstract class ConfigurationClassUtils {
 	 * @param metadata the metadata of the annotated class
 	 * @return {@code true} if the given class is to be registered for
 	 * configuration class processing; {@code false} otherwise
+	 * 如果是接口会直接返回false，如果是Component ComponentScan Import ImportResource 四个注解中一个会返回true，
+	 * 如果在方法上添加了@Bean注解也是会返回true。
 	 */
 	public static boolean isConfigurationCandidate(AnnotationMetadata metadata) {
 		// Do not consider an interface or an annotation...
+		//如果是接口直接返回false
 		if (metadata.isInterface()) {
 			return false;
 		}
 
 		// Any of the typical annotations found?
+		//Component ComponentScan Import ImportResource 四个注解中一个会返回true
 		for (String indicator : candidateIndicators) {
 			if (metadata.isAnnotated(indicator)) {
 				return true;
@@ -176,6 +185,7 @@ abstract class ConfigurationClassUtils {
 		}
 
 		// Finally, let's look for @Bean methods...
+		//最后一种有方法添加了这个@Bean注解
 		return hasBeanMethods(metadata);
 	}
 
