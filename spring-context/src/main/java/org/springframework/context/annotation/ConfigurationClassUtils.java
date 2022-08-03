@@ -84,22 +84,28 @@ abstract class ConfigurationClassUtils {
 	 */
 	public static boolean checkConfigurationClassCandidate(
 			BeanDefinition beanDef, MetadataReaderFactory metadataReaderFactory) {
-
+		//获取对应的className
 		String className = beanDef.getBeanClassName();
+		//有可能是通过工厂方法注解进来的BeanDefinition，直接返回false
 		if (className == null || beanDef.getFactoryMethodName() != null) {
 			return false;
 		}
 
 		AnnotationMetadata metadata;
+		//判断是不是AnnotatedBeanDefinition的BeanDefinition，这个接口有三个实现类。
+		//分别是AnnotatedGenericBeanDefinition、ScannedGenericBeanDefinition、ConfigurationClassBeanDefinition
 		if (beanDef instanceof AnnotatedBeanDefinition &&
 				className.equals(((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
 			// Can reuse the pre-parsed metadata from the given BeanDefinition...
+			// 获取对应的bean注解的元数据存起来
 			metadata = ((AnnotatedBeanDefinition) beanDef).getMetadata();
 		}
 		else if (beanDef instanceof AbstractBeanDefinition && ((AbstractBeanDefinition) beanDef).hasBeanClass()) {
 			// Check already loaded Class if present...
 			// since we possibly can't even load the class file for this Class.
+			//取出对应的BeanClass
 			Class<?> beanClass = ((AbstractBeanDefinition) beanDef).getBeanClass();
+			//判断是不是下面的四种类型的一种。
 			if (BeanFactoryPostProcessor.class.isAssignableFrom(beanClass) ||
 					BeanPostProcessor.class.isAssignableFrom(beanClass) ||
 					AopInfrastructureBean.class.isAssignableFrom(beanClass) ||
@@ -122,18 +128,25 @@ abstract class ConfigurationClassUtils {
 			}
 		}
 
+		//取出这个Configuration这个注解的数据
 		Map<String, Object> config = metadata.getAnnotationAttributes(Configuration.class.getName());
+		//不为空，同时判断方法需不需要代理
 		if (config != null && !Boolean.FALSE.equals(config.get("proxyBeanMethods"))) {
+			//给对应的属性org.springframework.context.annotation.ConfigurationClassPostProcessor.configurationClass设置为full
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
+		//如果没有该注解，则调用isConfigurationCandidate(metadata)方法
 		else if (config != null || isConfigurationCandidate(metadata)) {
+			//给对应的属性org.springframework.context.annotation.ConfigurationClassPostProcessor.configurationClass设置为lite
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		}
 		else {
+			//都不成立直接返回false
 			return false;
 		}
 
 		// It's a full or lite configuration candidate... Let's determine the order value, if any.
+		// 判断是否有order注解，有直接取出来，然后将其设置到attribute中去
 		Integer order = getOrder(metadata);
 		if (order != null) {
 			beanDef.setAttribute(ORDER_ATTRIBUTE, order);
