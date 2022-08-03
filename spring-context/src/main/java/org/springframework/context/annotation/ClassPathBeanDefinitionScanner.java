@@ -275,22 +275,36 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 		Assert.notEmpty(basePackages, "At least one base package must be specified");
 		Set<BeanDefinitionHolder> beanDefinitions = new LinkedHashSet<>();
 		for (String basePackage : basePackages) {
+			//扫描对应包下的所有的class文件
 			Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
+			//进行过滤后的BeanDefinition都会扫描出来
 			for (BeanDefinition candidate : candidates) {
+				//获取对应Scope
 				ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(candidate);
+				//设置对应的Scope
 				candidate.setScope(scopeMetadata.getScopeName());
+				//生成对应的beanName，这个beanName的生成规则和前面一样
 				String beanName = this.beanNameGenerator.generateBeanName(candidate, this.registry);
+				//这个判断肯定会进，所有的BeanDefinition的父类是AbstractBeanDefinition
 				if (candidate instanceof AbstractBeanDefinition) {
+					//设置一些默认值
 					postProcessBeanDefinition((AbstractBeanDefinition) candidate, beanName);
 				}
+				//这个判断也会进，扫描出来BeanDefinition都是实现了这个AnnotatedBeanDefinition接口
 				if (candidate instanceof AnnotatedBeanDefinition) {
+					//这儿设置lazy，primary，dependsOn，role，description属性，没有给值就设置默认值
 					AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
 				}
+				//判断这个BeanDefinition是否在容器中了，如果在直接不注册
 				if (checkCandidate(beanName, candidate)) {
+					//将对应BeanDefinition封装成对应BeanDefinitionHolder对象
 					BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(candidate, beanName);
+					//设置作用域代理模式
 					definitionHolder =
 							AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
+					//添加到beanDefinitions集合中去，最后进行返回。
 					beanDefinitions.add(definitionHolder);
+					//将这个BeanDefinitionHolder添加到BeanFactory的BeanDefinitionMap中去
 					registerBeanDefinition(definitionHolder, this.registry);
 				}
 			}

@@ -417,9 +417,14 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	private Set<BeanDefinition> scanCandidateComponents(String basePackage) {
 		Set<BeanDefinition> candidates = new LinkedHashSet<>();
 		try {
+			//拼接对应的路径
 			String packageSearchPath = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
 					resolveBasePackage(basePackage) + '/' + this.resourcePattern;
+			//取出对应包下的所有的class文件
+			//Spring所有的类的路径对应的封装成了Resource对象，
+			//然后这儿传入对应的路径，就可以获取其下面的所有的class，然后再次取对对应的元数据。
 			Resource[] resources = getResourcePatternResolver().getResources(packageSearchPath);
+			//判断是否要打印日志
 			boolean traceEnabled = logger.isTraceEnabled();
 			boolean debugEnabled = logger.isDebugEnabled();
 			for (Resource resource : resources) {
@@ -427,14 +432,18 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 					logger.trace("Scanning " + resource);
 				}
 				try {
+					//取出对应的元数据
 					MetadataReader metadataReader = getMetadataReaderFactory().getMetadataReader(resource);
+					//这个判断是第一层过滤
 					if (isCandidateComponent(metadataReader)) {
 						ScannedGenericBeanDefinition sbd = new ScannedGenericBeanDefinition(metadataReader);
 						sbd.setSource(resource);
+						//这个判断是第二层过滤
 						if (isCandidateComponent(sbd)) {
 							if (debugEnabled) {
 								logger.debug("Identified candidate component class: " + resource);
 							}
+							//双层过滤后才会添加candidates中去，最后进行返回。
 							candidates.add(sbd);
 						}
 						else {
@@ -484,13 +493,16 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 * and does match at least one include filter.
 	 * @param metadataReader the ASM ClassReader for the class
 	 * @return whether the class qualifies as a candidate component
+	 * 可以看到只要满足我们对应的includeFilters中的注解，就直接返回true，然后会返回到原来的方法，继续执行后续的操作
 	 */
 	protected boolean isCandidateComponent(MetadataReader metadataReader) throws IOException {
+		//排除在外的注解
 		for (TypeFilter tf : this.excludeFilters) {
 			if (tf.match(metadataReader, getMetadataReaderFactory())) {
 				return false;
 			}
 		}
+		//在内的注解
 		for (TypeFilter tf : this.includeFilters) {
 			if (tf.match(metadataReader, getMetadataReaderFactory())) {
 				return isConditionMatch(metadataReader);
@@ -520,6 +532,8 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 * <p>Can be overridden in subclasses.
 	 * @param beanDefinition the bean definition to check
 	 * @return whether the bean definition qualifies as a candidate component
+	 * 可以发现直接取出对应的元数据，然后判断这个类是不是前面一个判断是不是基础的类，不是接口也不是抽象类，会直接返回true，
+	 * 还有一种情况就是加了LookUp注解的类同时这个类是抽象的，这两种只要满足一个就返回true。
 	 */
 	protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
 		AnnotationMetadata metadata = beanDefinition.getMetadata();

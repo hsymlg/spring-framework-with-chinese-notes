@@ -100,6 +100,12 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 		//先跑无参构造器的逻辑，初始化一些processor去beanDefinitionMap中去
 		this();
 		register(componentClasses);
+		/**
+		 * 调用链
+		 * --->AbstractApplicationContext#refresh()
+		 * --->AbstractApplicationContext#invokeBeanFactoryPostProcessors()
+		 * --->PostProcessorRegistrationDelegate#invokeBeanFactoryPostProcessors()
+		 */
 		refresh();
 	}
 
