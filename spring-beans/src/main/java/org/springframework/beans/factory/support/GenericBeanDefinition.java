@@ -30,7 +30,9 @@ import org.springframework.util.ObjectUtils;
  * registering user-visible bean definitions (which a post-processor might operate on,
  * potentially even reconfiguring the parent name). Use {@code RootBeanDefinition} /
  * {@code ChildBeanDefinition} where parent/child relationships happen to be pre-determined.
+ * GenericBeanDefinition 的优点是它允许动态定义父依赖项，而不是将角色“硬编码”为 RootBeanDefinition。
  * GenericBeanDefinition可以作为父bd出现，也可以作为子bd出现。他可以完全替代ChildBeanDefinition，但不能完全替代RootBeanDefinition
+ * 因为Spring 在通过 BeanDefinition 创建 bean 的实例时，通常都会将 BeanDefinition 转化为 RootBeanDefinition 后，再进行 bean 实例的创建
  * @author Juergen Hoeller
  * @since 2.5
  * @see #setParentName

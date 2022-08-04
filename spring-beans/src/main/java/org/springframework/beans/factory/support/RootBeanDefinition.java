@@ -52,7 +52,7 @@ import org.springframework.util.Assert;
  * 3. 具体的工厂方法（Class类型），包括工厂方法的返回类型，工厂方法的Method对象
  * 4. 构造函数、构造函数形参类型
  * 5. Bean的class对象
- * RootBeanDefinition作为父bd出现，不能作为子bd出现。
+ * RootBeanDefinition作为父bd出现，不能作为子bd出现。（setParentName方法）
  * @author Rod Johnson
  * @author Juergen Hoeller
  * @author Sam Brannen
