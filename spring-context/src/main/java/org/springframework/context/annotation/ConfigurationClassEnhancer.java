@@ -95,7 +95,11 @@ class ConfigurationClassEnhancer {
 	 * @return the enhanced subclass
 	 */
 	public Class<?> enhance(Class<?> configClass, @Nullable ClassLoader classLoader) {
-		if (EnhancedConfiguration.class.isAssignableFrom(configClass)) {
+		//有两个Class类型的类象，一个是调用isAssignableFrom方法的类对象（后称对象a），
+		//以及方法中作为参数的这个类对象（称之为对象b），这两个对象如果满足以下条件则返回true，否则返回false：
+		//a对象所对应类信息是b对象所对应的类信息的父类或者是父接口，简单理解即a是b的父类或接口
+		//a对象所对应类信息与b对象所对应的类信息相同，简单理解即a和b为同一个类或同一个接口
+		if (EnhancedConfiguration.class.isAssignableFrom(configClass)) {//这儿很明显不是，只有在解析过会才是
 			if (logger.isDebugEnabled()) {
 				logger.debug(String.format("Ignoring request to enhance %s as it has " +
 						"already been enhanced. This usually indicates that more than one " +
@@ -106,6 +110,7 @@ class ConfigurationClassEnhancer {
 			}
 			return configClass;
 		}
+		//创建对应的代理类
 		Class<?> enhancedClass = createClass(newEnhancer(configClass, classLoader));
 		if (logger.isTraceEnabled()) {
 			logger.trace(String.format("Successfully enhanced %s; enhanced class name is: %s",
@@ -119,12 +124,17 @@ class ConfigurationClassEnhancer {
 	 */
 	private Enhancer newEnhancer(Class<?> configSuperClass, @Nullable ClassLoader classLoader) {
 		Enhancer enhancer = new Enhancer();
+		//设置父类
 		enhancer.setSuperclass(configSuperClass);
+		//设置接口
 		enhancer.setInterfaces(new Class<?>[] {EnhancedConfiguration.class});
 		enhancer.setUseFactory(false);
+		//设置名字生成策略 加上BySpringCGLIB
 		enhancer.setNamingPolicy(SpringNamingPolicy.INSTANCE);
 		enhancer.setStrategy(new BeanFactoryAwareGeneratorStrategy(classLoader));
+		//设置拦截的策略（注意里面的拦截策略类中有一个accept方法）
 		enhancer.setCallbackFilter(CALLBACK_FILTER);
+		//设置拦截的类型
 		enhancer.setCallbackTypes(CALLBACK_FILTER.getCallbackTypes());
 		return enhancer;
 	}
@@ -185,10 +195,16 @@ class ConfigurationClassEnhancer {
 			}
 		}
 
+		/**
+		 * 拦截的规则，就是如果是加了@Bean注解的方法，同时不是实现BeanFactoryAware接口的setBeanFactory方法，
+		 * 会调用BeanMethodInterceptor中的intercept的方法。
+		 * 如果是实现BeanFactoryAware接口的setBeanFactory方法，就会调用BeanFactoryAwareMethodInterceptor中的intercept的方法
+		 */
 		@Override
 		public int accept(Method method) {
 			for (int i = 0; i < this.callbacks.length; i++) {
 				Callback callback = this.callbacks[i];
+				//关键是这个isMatch
 				if (!(callback instanceof ConditionalCallback conditional) || conditional.isMatch(method)) {
 					return i;
 				}
@@ -253,6 +269,7 @@ class ConfigurationClassEnhancer {
 
 		@Override
 		public boolean isMatch(Method candidateMethod) {
+			//判断这个方法是不是实现BeanFactoryAware接口的setBeanFactory方法
 			return isSetBeanFactory(candidateMethod);
 		}
 
@@ -402,6 +419,7 @@ class ConfigurationClassEnhancer {
 
 		@Override
 		public boolean isMatch(Method candidateMethod) {
+			//判断不是Object类，同时不是实现BeanFactoryAware接口的是setBeanFactory方法，同时也是加了@Bean的注解的
 			return (candidateMethod.getDeclaringClass() != Object.class &&
 					!BeanFactoryAwareMethodInterceptor.isSetBeanFactory(candidateMethod) &&
 					BeanAnnotationHelper.isBeanAnnotated(candidateMethod));
