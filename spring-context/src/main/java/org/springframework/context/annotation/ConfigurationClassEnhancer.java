@@ -255,12 +255,16 @@ class ConfigurationClassEnhancer {
 		@Override
 		@Nullable
 		public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
+			//获取$$beanFactory属性
 			Field field = ReflectionUtils.findField(obj.getClass(), BEAN_FACTORY_FIELD);
 			Assert.state(field != null, "Unable to find generated BeanFactory field");
+			//取出方法中的BeanFactory的属性，设置给$$beanFactory
 			field.set(obj, args[0]);
 
 			// Does the actual (non-CGLIB) superclass implement BeanFactoryAware?
 			// If so, call its setBeanFactory() method. If not, just exit.
+			//实际的（非CGLIB）超类是否实现BeanFactoryAware？
+			//如果是这样，则调用其setBeanFactory（）方法。如果没有，请退出。
 			if (BeanFactoryAware.class.isAssignableFrom(ClassUtils.getUserClass(obj.getClass().getSuperclass()))) {
 				return proxy.invokeSuper(obj, args);
 			}
@@ -300,11 +304,13 @@ class ConfigurationClassEnhancer {
 		@Nullable
 		public Object intercept(Object enhancedConfigInstance, Method beanMethod, Object[] beanMethodArgs,
 					MethodProxy cglibMethodProxy) throws Throwable {
-
+			//获取对应的BeanFactory
 			ConfigurableBeanFactory beanFactory = getBeanFactory(enhancedConfigInstance);
+			//获取对应的BeanName
 			String beanName = BeanAnnotationHelper.determineBeanNameFor(beanMethod);
 
 			// Determine whether this bean is a scoped-proxy
+			//判断这个bean是不是scoped-proxy
 			if (BeanAnnotationHelper.isScopedProxy(beanMethod)) {
 				String scopedBeanName = ScopedProxyCreator.getTargetBeanName(beanName);
 				if (beanFactory.isCurrentlyInCreation(scopedBeanName)) {
@@ -319,9 +325,19 @@ class ConfigurationClassEnhancer {
 			// proxy that intercepts calls to getObject() and returns any cached bean instance.
 			// This ensures that the semantics of calling a FactoryBean from within @Bean methods
 			// is the same as that of referring to a FactoryBean within XML. See SPR-6602.
+			//首先，检查所请求的bean是否为FactoryBean。
+			//如果是这样，则创建一个子类代理，以拦截对getObject()的调用并返回所有缓存的Bean实例。
+			//这样可确保从@Bean方法中调用FactoryBean的语义
+			//与在XML中引用FactoryBean的语义相同
 			if (factoryContainsBean(beanFactory, BeanFactory.FACTORY_BEAN_PREFIX + beanName) &&
 					factoryContainsBean(beanFactory, beanName)) {
 				Object factoryBean = beanFactory.getBean(BeanFactory.FACTORY_BEAN_PREFIX + beanName);
+				/**
+				 * 首先，检查所请求的bean是否为FactoryBean。如果是这样，则创建一个子类代理，以拦截对getObject()的调用并返回所有缓存的Bean实例。
+				 * 判断是不是 ScopedProxyFactoryBean，
+				 * 如果是，就不进行下一步的处理，
+				 * 如果不是调用enhanceFactoryBean(factoryBean, beanMethod.getReturnType(), beanFactory, beanName);方法
+				 */
 				if (factoryBean instanceof ScopedProxyFactoryBean) {
 					// Scoped proxy factory beans are a special case and should not be further proxied
 				}
@@ -330,7 +346,7 @@ class ConfigurationClassEnhancer {
 					return enhanceFactoryBean(factoryBean, beanMethod.getReturnType(), beanFactory, beanName);
 				}
 			}
-
+			//如果不是就是正常的方法，并不是处理FactoryBean的 判断是不是调用当前的工厂的方法
 			if (isCurrentlyInvokedFactoryMethod(beanMethod)) {
 				// The factory is calling the bean method in order to instantiate and register the bean
 				// (i.e. via a getBean() call) -> invoke the super implementation of the method to actually
@@ -345,9 +361,10 @@ class ConfigurationClassEnhancer {
 									"these container lifecycle issues; see @Bean javadoc for complete details.",
 							beanMethod.getDeclaringClass().getSimpleName(), beanMethod.getName()));
 				}
+				//是的话就直接调用父类的方法，也就是原始的创建的方法
 				return cglibMethodProxy.invokeSuper(enhancedConfigInstance, beanMethodArgs);
 			}
-
+			//不是的话，就会调用如下的方法
 			return resolveBeanReference(beanMethod, beanMethodArgs, beanFactory, beanName);
 		}
 
@@ -475,10 +492,15 @@ class ConfigurationClassEnhancer {
 				ConfigurableBeanFactory beanFactory, String beanName) {
 
 			try {
+				//获取对应的class
 				Class<?> clazz = factoryBean.getClass();
+				//判断是不是final的类
 				boolean finalClass = Modifier.isFinal(clazz.getModifiers());
+				//判断getObject是不是final的方法
 				boolean finalMethod = Modifier.isFinal(clazz.getMethod("getObject").getModifiers());
+				//两个都是final的
 				if (finalClass || finalMethod) {
+					//返回值的是接口
 					if (exposedType.isInterface()) {
 						if (logger.isTraceEnabled()) {
 							logger.trace("Creating interface proxy for FactoryBean '" + beanName + "' of type [" +
@@ -489,6 +511,7 @@ class ConfigurationClassEnhancer {
 						return createInterfaceProxyForFactoryBean(factoryBean, exposedType, beanFactory, beanName);
 					}
 					else {
+						//返回的值不是接口
 						if (logger.isDebugEnabled()) {
 							logger.debug("Unable to proxy FactoryBean '" + beanName + "' of type [" +
 									clazz.getName() + "] for use within another @Bean method because its " +
@@ -503,10 +526,11 @@ class ConfigurationClassEnhancer {
 			catch (NoSuchMethodException ex) {
 				// No getObject() method -> shouldn't happen, but as long as nobody is trying to call it...
 			}
-
+			//其中有一个不是final的
 			return createCglibProxyForFactoryBean(factoryBean, beanFactory, beanName);
 		}
 
+		//使用的jdk的动态的代理
 		private Object createInterfaceProxyForFactoryBean(Object factoryBean, Class<?> interfaceType,
 				ConfigurableBeanFactory beanFactory, String beanName) {
 
@@ -552,7 +576,7 @@ class ConfigurationClassEnhancer {
 							"and regular FactoryBean instantiation via default constructor fails as well", ex);
 				}
 			}
-
+			//然后当调用的是getObject的方法的时候，返回的直接从容器中取得
 			((Factory) fbProxy).setCallback(0, (MethodInterceptor) (obj, method, args, proxy) -> {
 				if (method.getName().equals("getObject") && args.length == 0) {
 					return beanFactory.getBean(beanName);
