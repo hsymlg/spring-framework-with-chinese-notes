@@ -163,6 +163,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 		this.registry = registry;
 		//useDefaultFilters的值默认为true
 		if (useDefaultFilters) {
+			//这个方法中添加了哪些注解会扫描出来，还有就是哪些注解不会扫描出来。
 			registerDefaultFilters();
 		}
 		//设置对应的环境
@@ -275,7 +276,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 		Assert.notEmpty(basePackages, "At least one base package must be specified");
 		Set<BeanDefinitionHolder> beanDefinitions = new LinkedHashSet<>();
 		for (String basePackage : basePackages) {
-			//扫描对应包下的所有的class文件
+			//扫描对应包下的所有的class文件，返回的是ScannedGenericBeanDefinition的set
 			Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
 			//进行过滤后的BeanDefinition都会扫描出来
 			for (BeanDefinition candidate : candidates) {
