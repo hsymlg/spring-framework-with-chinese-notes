@@ -95,7 +95,7 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * from the given component classes and automatically refreshing the context.
 	 * @param componentClasses one or more component classes &mdash; for example,
 	 * {@link Configuration @Configuration} classes
-	 *                         spring提供给外部扫描入口方法是这个，spring本身是不用这个的,而是refresh()
+	 * spring提供给外部扫描入口方法是这个，spring本身是不用这个的,而是refresh()
 	 * 这个方法是new AnnotationConfigApplicationContext(AppConfig.class)的入口
 	 * 注意AppConfig.class方法加的是@ComponentScan("com.annotationConfigApplicationContextTest")
 	 * 下面的scan方法是入参是"com.annotationConfigApplicationContextTest"，代替@ComponentScan快速定位源码
