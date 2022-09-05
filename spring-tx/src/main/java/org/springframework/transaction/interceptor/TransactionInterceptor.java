@@ -50,6 +50,7 @@ import org.springframework.transaction.TransactionManager;
  * @see TransactionProxyFactoryBean
  * @see org.springframework.aop.framework.ProxyFactoryBean
  * @see org.springframework.aop.framework.ProxyFactory
+ * Spring中声明式事务时通过AOP的方式实现的，事务方法的执行最终都会由TransactionInterceptor的invoke()拦截增强的
  */
 @SuppressWarnings("serial")
 public class TransactionInterceptor extends TransactionAspectSupport implements MethodInterceptor, Serializable {
@@ -113,9 +114,13 @@ public class TransactionInterceptor extends TransactionAspectSupport implements 
 		// Work out the target class: may be {@code null}.
 		// The TransactionAttributeSource should be passed the target class
 		// as well as the method, which may be from an interface.
+		// 获取我们的代理对象的class属性
 		Class<?> targetClass = (invocation.getThis() != null ? AopUtils.getTargetClass(invocation.getThis()) : null);
 
 		// Adapt to TransactionAspectSupport's invokeWithinTransaction...
+		// 以事务的方式调用目标方法
+		// 在这埋了一个钩子函数 用来回调目标方法的
+		//事务的实现是委托给TransactionAspectSupport父类实现的。
 		return invokeWithinTransaction(invocation.getMethod(), targetClass, new CoroutinesInvocationCallback() {
 			@Override
 			@Nullable

@@ -112,6 +112,20 @@ import org.springframework.transaction.TransactionDefinition;
  * @see org.springframework.transaction.interceptor.TransactionAttribute
  * @see org.springframework.transaction.interceptor.DefaultTransactionAttribute
  * @see org.springframework.transaction.interceptor.RuleBasedTransactionAttribute
+ * 如何自动生成代理对象
+ * 谁负责创建代理？
+ *
+ * InfrastructureAdvisorAutoProxyCreator继承我们熟悉的AbstractAdvisorAutoProxyCreator类，是个BeanPostProcessor，
+ * 在Spring容器启动的过程中，会拦截bean的创建过程，为需要事务支持的bean生成代理对象。
+ *
+ * 谁负责判断bean是否需要代理？
+ *
+ * BeanFactoryTransactionAttributeSourceAdvisor是个Advisor，组合了切点和通知。
+ * 哪些bean需要代理满足增强由切点TransactionAttributeSourcePointcut来通过TransactionAttributeSource来判定bean的类或是方法上是否有@Transactional注解。
+ *
+ * 谁负责实际的事务增强工作?
+ *
+ * TransactionInterceptor 继承MethodInterceptor是个拦截器，负责拦截代理对象目标方法，在前后增加事务控制的逻辑。这个类下面进行详细分析。
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
@@ -136,6 +150,7 @@ public @interface Transactional {
 	 * @see #value
 	 * @see org.springframework.transaction.PlatformTransactionManager
 	 * @see org.springframework.transaction.ReactiveTransactionManager
+	 * 用来确定目标事务管理器bean
 	 */
 	@AliasFor("value")
 	String transactionManager() default "";
@@ -156,6 +171,7 @@ public @interface Transactional {
 	 * The transaction propagation type.
 	 * <p>Defaults to {@link Propagation#REQUIRED}.
 	 * @see org.springframework.transaction.interceptor.TransactionAttribute#getPropagationBehavior()
+	 * 事务传播类型
 	 */
 	Propagation propagation() default Propagation.REQUIRED;
 
@@ -170,6 +186,7 @@ public @interface Transactional {
 	 * isolation level.
 	 * @see org.springframework.transaction.interceptor.TransactionAttribute#getIsolationLevel()
 	 * @see org.springframework.transaction.support.AbstractPlatformTransactionManager#setValidateExistingTransaction
+	 * 事务隔离级别
 	 */
 	Isolation isolation() default Isolation.DEFAULT;
 
@@ -181,6 +198,7 @@ public @interface Transactional {
 	 * transactions.
 	 * @return the timeout in seconds
 	 * @see org.springframework.transaction.interceptor.TransactionAttribute#getTimeout()
+	 * 事务超时
 	 */
 	int timeout() default TransactionDefinition.TIMEOUT_DEFAULT;
 
@@ -207,6 +225,7 @@ public @interface Transactional {
 	 * but rather silently ignore the hint.
 	 * @see org.springframework.transaction.interceptor.TransactionAttribute#isReadOnly()
 	 * @see org.springframework.transaction.support.TransactionSynchronizationManager#isCurrentTransactionReadOnly()
+	 * 只读事务
 	 */
 	boolean readOnly() default false;
 
@@ -225,6 +244,7 @@ public @interface Transactional {
 	 * @see #rollbackForClassName
 	 * @see org.springframework.transaction.interceptor.RollbackRuleAttribute#RollbackRuleAttribute(Class)
 	 * @see org.springframework.transaction.interceptor.DefaultTransactionAttribute#rollbackOn(Throwable)
+	 * 指定哪些异常类型必须导致事务回滚，指定Throwable的子类型；默认只回滚RuntimeException和Error
 	 */
 	Class<? extends Throwable>[] rollbackFor() default {};
 
@@ -238,6 +258,7 @@ public @interface Transactional {
 	 * @see #rollbackFor
 	 * @see org.springframework.transaction.interceptor.RollbackRuleAttribute#RollbackRuleAttribute(String)
 	 * @see org.springframework.transaction.interceptor.DefaultTransactionAttribute#rollbackOn(Throwable)
+	 * 指示哪些异常类型必须导致事务回滚，这里异常类名称
 	 */
 	String[] rollbackForClassName() default {};
 
@@ -252,6 +273,7 @@ public @interface Transactional {
 	 * @see #noRollbackForClassName
 	 * @see org.springframework.transaction.interceptor.NoRollbackRuleAttribute#NoRollbackRuleAttribute(Class)
 	 * @see org.springframework.transaction.interceptor.DefaultTransactionAttribute#rollbackOn(Throwable)
+	 * 指定哪些异常不进行回滚
 	 */
 	Class<? extends Throwable>[] noRollbackFor() default {};
 
@@ -265,6 +287,7 @@ public @interface Transactional {
 	 * @see #noRollbackFor
 	 * @see org.springframework.transaction.interceptor.NoRollbackRuleAttribute#NoRollbackRuleAttribute(String)
 	 * @see org.springframework.transaction.interceptor.DefaultTransactionAttribute#rollbackOn(Throwable)
+	 * 指定哪些异常类型不进行回滚，异常类型名称
 	 */
 	String[] noRollbackForClassName() default {};
 

@@ -35,6 +35,7 @@ import org.springframework.core.type.AnnotationMetadata;
  * @since 3.1
  * @see org.springframework.cache.annotation.EnableCaching
  * @see org.springframework.transaction.annotation.EnableTransactionManagement
+ * AutoProxyRegistrar的作用是注入一个InfrastructureAdvisorAutoProxyCreator，用于拦截bean的创建过程，为需要的事务控制的bean 创建代理对象
  */
 public class AutoProxyRegistrar implements ImportBeanDefinitionRegistrar {
 
@@ -59,6 +60,7 @@ public class AutoProxyRegistrar implements ImportBeanDefinitionRegistrar {
 	public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 		boolean candidateFound = false;
 		Set<String> annTypes = importingClassMetadata.getAnnotationTypes();
+		// 遍历所有注解，找到有mode和proxyTargetClass的注解
 		for (String annType : annTypes) {
 			AnnotationAttributes candidate = AnnotationConfigUtils.attributesFor(importingClassMetadata, annType);
 			if (candidate == null) {
@@ -70,7 +72,9 @@ public class AutoProxyRegistrar implements ImportBeanDefinitionRegistrar {
 					Boolean.class == proxyTargetClass.getClass()) {
 				candidateFound = true;
 				if (mode == AdviceMode.PROXY) {
+					// 注册aop InfrastructureAdvisorAutoProxyCreator 不展开
 					AopConfigUtils.registerAutoProxyCreatorIfNecessary(registry);
+					// 强制设置proxyTargetClass=true后面使用cglib
 					if ((Boolean) proxyTargetClass) {
 						AopConfigUtils.forceAutoProxyCreatorToUseClassProxying(registry);
 						return;

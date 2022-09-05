@@ -168,10 +168,13 @@ public class AnnotationTransactionAttributeSource extends AbstractFallbackTransa
 	 * <p>Can be overridden to support custom annotations that carry transaction metadata.
 	 * @param element the annotated method or class
 	 * @return the configured transaction attribute, or {@code null} if none was found
+	 * 委托给SpringTransactionAnnotationParser解析给定类或是方法上的@Transactional注解的事务属性
 	 */
 	@Nullable
 	protected TransactionAttribute determineTransactionAttribute(AnnotatedElement element) {
+		// 获取我们的注解解析器
 		for (TransactionAnnotationParser parser : this.annotationParsers) {
+			// 通过注解解析器去解析我们的元素(方法或者类)上的注解
 			TransactionAttribute attr = parser.parseTransactionAnnotation(element);
 			if (attr != null) {
 				return attr;
