@@ -568,7 +568,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			prepareBeanFactory(beanFactory);
 
 			try {
-				// 【这里需要知道 BeanFactoryPostProcessor 这个知识点，Bean 如果实现了此接口，
+				//【这里需要知道 BeanFactoryPostProcessor 这个知识点，Bean 如果实现了此接口，
 				// 那么在容器初始化以后，Spring 会负责调用里面的 postProcessBeanFactory 方法。】
 
 				// 这里是提供给子类的扩展点，到这里的时候，所有的 Bean 都加载、注册完成了，但是都还没有初始化

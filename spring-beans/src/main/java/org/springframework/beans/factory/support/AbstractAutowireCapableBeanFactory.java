@@ -509,7 +509,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// 验证以及准备覆盖的方法
 		try {
 			// 验证并准备为此bean定义的方法覆盖。检查是否存在具有指定名称的方法。
-			//这里 主要是处理配置了lookup-method，replace-method两种依赖注入的方式，
+			// 这里主要是处理配置了lookup-method，replace-method两种依赖注入的方式，
 			// 下面有详细的方法解释
 			mbdToUse.prepareMethodOverrides();
 		}

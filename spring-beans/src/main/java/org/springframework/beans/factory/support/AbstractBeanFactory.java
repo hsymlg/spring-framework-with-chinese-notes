@@ -241,6 +241,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			String name, @Nullable Class<T> requiredType, @Nullable Object[] args, boolean typeCheckOnly)
 			throws BeansException {
 		//取指定 alias 所表示的最终 beanName
+		// 获取一个 “正统的” beanName，处理两种情况，一个是前面说的 FactoryBean(前面带 ‘&’)，
+		// 一个是别名问题，因为这个方法是 getBean，获取 Bean 用的，你要是传一个别名进来，是完全可以的
 		String beanName = transformedBeanName(name);
 		Object beanInstance;
 
@@ -249,7 +251,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		//Spring 创建Bean的原则是不等Bean创建完成就会将创建Bean的ObjectFactory提前曝光，
 		//也就是先将ObjectFactory 加入到缓存中，一旦下个Bean 创建时依赖上个bean ,则直接使用ObjectFactory
 		Object sharedInstance = getSingleton(beanName);
-		// 如果sharedInstance不为null,也就是非第一次进入
+		// 如果sharedInstance不为null,也就是非第一次进入；
+		// 但是如果 args 不为空的时候，那么意味着调用方不是希望获取 Bean，而是创建 Bean
 		if (sharedInstance != null && args == null) {
 			if (logger.isTraceEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
@@ -261,7 +264,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					logger.trace("Returning cached instance of singleton bean '" + beanName + "'");
 				}
 			}
-			//返回对应的实例，这里的作用就是判断 对应的Bean是不是FactoryBean类型，如果是 就通过调用对应的getObject()方法，返回对应的实例，如果不是FactoryBean类型，直接返回
+			//返回对应的实例，这里的作用就是判断 对应的Bean是不是FactoryBean类型，如果是
+			//就通过调用对应的getObject()方法，返回对应的实例，如果不是FactoryBean类型，直接返回
 			beanInstance = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
 		//第一次进入sharedInstance肯定为null
@@ -305,6 +309,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 			StartupStep beanCreation = this.applicationStartup.start("spring.beans.instantiate")
 					.tag("beanName", name);
+			//到这里的话，要准备创建 Bean 了，对于 singleton 的 Bean 来说，容器中还没创建过此 Bean；
+			//对于 prototype 的 Bean 来说，本来就是要创建一个新的 Bean。
 			try {
 				if (requiredType != null) {
 					beanCreation.tag("beanType", requiredType::toString);
