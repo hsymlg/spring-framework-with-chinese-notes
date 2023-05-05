@@ -59,6 +59,8 @@ import org.springframework.beans.BeansException;
  * @see BeanPostProcessor
  * @see PropertyResourceConfigurer
  */
+//BeanFactory标准初始化之后，所有的Bean定义已经被加载，但标准Bean的实例还没被创建（不包括BeanFactoryPostProcessor类型）。
+//该方法通常用于修改bean的定义，Bean的属性值等，甚至可以在此快速初始化Bean。
 @FunctionalInterface
 public interface BeanFactoryPostProcessor {
 

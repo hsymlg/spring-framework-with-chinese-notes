@@ -171,14 +171,15 @@ public abstract class AnnotationConfigUtils {
 		Set<BeanDefinitionHolder> beanDefs = new LinkedHashSet<>(8);
 
 		if (!registry.containsBeanDefinition(CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME)) {
-			//注册ConfigurationClassPostProcessor一个比较核心的BeanFactoryPostProcessor
+			//注册ConfigurationClassPostProcessor一个比较核心的BeanFactoryPostProcessor实现了BeanDefinitionRegistryPostProcessor接口
+			//ConfigurationClassPostProcessor这个类主要做的事情：负责所有bean的注册
 			RootBeanDefinition def = new RootBeanDefinition(ConfigurationClassPostProcessor.class);
 			def.setSource(source);
 			beanDefs.add(registerPostProcessor(registry, def, CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME));
 		}
 
 		if (!registry.containsBeanDefinition(AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME)) {
-			//注册AutowiredAnnotationBeanPostProcessor一个BeanPostProcessor
+			//注册AutowiredAnnotationBeanPostProcessor一个BeanPostProcessor，负责处理@Autowire注解
 			RootBeanDefinition def = new RootBeanDefinition(AutowiredAnnotationBeanPostProcessor.class);
 			def.setSource(source);
 			beanDefs.add(registerPostProcessor(registry, def, AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME));
@@ -194,7 +195,7 @@ public abstract class AnnotationConfigUtils {
 		// Check for JSR-250 support, and if present add an InitDestroyAnnotationBeanPostProcessor
 		// for the javax variant of PostConstruct/PreDestroy.
 		if (jsr250Present && !registry.containsBeanDefinition(JSR250_ANNOTATION_PROCESSOR_BEAN_NAME)) {
-			//注册CommonAnnotationBeanPostProcessor一个BeanPostProcessor，这个是为了支持JSR-250的注解
+			//注册CommonAnnotationBeanPostProcessor一个BeanPostProcessor，这个是为了支持JSR-250的注解(比如@Resource、@PostConstruct和@PreDestroy等等)
 			try {
 				RootBeanDefinition def = new RootBeanDefinition(InitDestroyAnnotationBeanPostProcessor.class);
 				def.getPropertyValues().add("initAnnotationType", classLoader.loadClass("javax.annotation.PostConstruct"));
@@ -222,13 +223,13 @@ public abstract class AnnotationConfigUtils {
 			def.setSource(source);
 			beanDefs.add(registerPostProcessor(registry, def, PERSISTENCE_ANNOTATION_PROCESSOR_BEAN_NAME));
 		}
-		//注册一个EventListenerMethodProcessor同样是BeanFactoryPostProcessor
+		//注册一个EventListenerMethodProcessor同样是BeanFactoryPostProcessor，负责处理@EventListener标注的方法，即事件处理器
 		if (!registry.containsBeanDefinition(EVENT_LISTENER_PROCESSOR_BEAN_NAME)) {
 			RootBeanDefinition def = new RootBeanDefinition(EventListenerMethodProcessor.class);
 			def.setSource(source);
 			beanDefs.add(registerPostProcessor(registry, def, EVENT_LISTENER_PROCESSOR_BEAN_NAME));
 		}
-		//注册一个DefaultEventListenerFactory
+		//注册一个DefaultEventListenerFactory，负责将@EventListener标注的方法包装为ApplicationListener对象
 		if (!registry.containsBeanDefinition(EVENT_LISTENER_FACTORY_BEAN_NAME)) {
 			RootBeanDefinition def = new RootBeanDefinition(DefaultEventListenerFactory.class);
 			def.setSource(source);
