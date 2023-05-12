@@ -27,7 +27,7 @@ import org.springframework.transaction.TransactionStatus;
  * Implemented by {@link TransactionTemplate}. Not often used directly,
  * but a useful option to enhance testability, as it can easily be
  * mocked or stubbed.
- *
+ * 这个接口用来执行事务的回调方法
  * @author Juergen Hoeller
  * @since 2.0.4
  */
