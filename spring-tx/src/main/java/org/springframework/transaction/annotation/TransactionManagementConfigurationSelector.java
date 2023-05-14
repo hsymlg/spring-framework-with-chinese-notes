@@ -43,6 +43,7 @@ public class TransactionManagementConfigurationSelector extends AdviceModeImport
 	 * and {@code ASPECTJ} values of {@link EnableTransactionManagement#mode()},
 	 * respectively.
 	 * 此处是AdviceMode的作用，默认是用代理，另外一个是ASPECTJ
+	 * 默认最终载入了AutoProxyRegistrar、ProxyTransactionManagementConfiguration2个类
 	 */
 	@Override
 	protected String[] selectImports(AdviceMode adviceMode) {
