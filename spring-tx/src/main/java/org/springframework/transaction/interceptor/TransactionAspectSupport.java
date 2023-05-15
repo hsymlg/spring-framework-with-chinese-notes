@@ -345,11 +345,10 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 		// If the transaction attribute is null, the method is non-transactional.
 		// 获取我们的事务属性源对象
 		TransactionAttributeSource tas = getTransactionAttributeSource();
-		// 通过事务属性源对象获取到当前方法的事务属性信息
+		// 通过事务属性源对象获取到当前方法的事务属性信息，如果transaction attribute为空,该方法就是非编程式事务
 		final TransactionAttribute txAttr = (tas != null ? tas.getTransactionAttribute(method, targetClass) : null);
-		// @1获取我们配置的事务管理器对象
+		// 获取我们配置的事务管理器对象
 		final TransactionManager tm = determineTransactionManager(txAttr);
-
 		if (this.reactiveAdapterRegistry != null && tm instanceof ReactiveTransactionManager) {
 			boolean isSuspendingFunction = KotlinDetector.isSuspendingFunction(method);
 			boolean hasSuspendingFlowReturnType = isSuspendingFunction &&
@@ -387,22 +386,23 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 		// 获取连接点的唯一标识  类名+方法名
 		final String joinpointIdentification = methodIdentification(method, targetClass, txAttr);
 
-		// 声明式事务处理
+		// 声明式事务处理：如果事务属性为空 或者 非回调偏向的事务管理器
 		if (txAttr == null || !(ptm instanceof CallbackPreferringPlatformTransactionManager)) {
 			// Standard transaction demarcation with getTransaction and commit/rollback calls.
-			// @2创建TransactionInfo
+			// 创建TransactionInfo
 			TransactionInfo txInfo = createTransactionIfNecessary(ptm, txAttr, joinpointIdentification);
 
 			Object retVal;
 			try {
 				// This is an around advice: Invoke the next interceptor in the chain.
 				// This will normally result in a target object being invoked.
+				// 这里就是一个环绕增强，在这个proceed前后可以自己定义增强实现
 				// 执行被增强方法,调用具体的处理逻辑
 				retVal = invocation.proceedWithInvocation();
 			}
 			catch (Throwable ex) {
 				// target invocation exception
-				//@3 异常回滚 如何走？可能只需提交，也可能只需回滚，这个取决于事务的配置
+				// 异常回滚 如何走？可能只需提交，也可能只需回滚，这个取决于事务的配置
 				completeTransactionAfterThrowing(txInfo, ex);
 				throw ex;
 			}
@@ -422,7 +422,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			commitTransactionAfterReturning(txInfo);
 			return retVal;
 		}
-
+		// 编程式事务
 		else {
 			Object result;
 			final ThrowableHolder throwableHolder = new ThrowableHolder();
@@ -440,22 +440,28 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 						return retVal;
 					}
 					catch (Throwable ex) {
+						// 如果该异常需要回滚
 						if (txAttr.rollbackOn(ex)) {
 							// A RuntimeException: will lead to a rollback.
+							// 如果是运行时异常返回
 							if (ex instanceof RuntimeException) {
 								throw (RuntimeException) ex;
 							}
+							// 如果是其它异常都抛ThrowableHolderException
 							else {
 								throw new ThrowableHolderException(ex);
 							}
 						}
+						// 如果不需要回滚
 						else {
 							// A normal return value: will lead to a commit.
+							// 定义异常，最终就直接提交事务了
 							throwableHolder.throwable = ex;
 							return null;
 						}
 					}
 					finally {
+						//清空当前事务信息，重置为老的
 						cleanupTransactionInfo(txInfo);
 					}
 				});
@@ -619,7 +625,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 		TransactionStatus status = null;
 		if (txAttr != null) {
 			if (tm != null) {
-				// @1获取TransactionStatus事务状态信息，也就是是编程式事务的创建和开启。
+				// 获取TransactionStatus事务状态信息，也就是是编程式事务的创建和开启，大道归一，都是调用PlatformTransactionManager.getTransaction()
 				status = tm.getTransaction(txAttr);
 			}
 			else {
@@ -629,7 +635,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 				}
 			}
 		}
-		// @2根据指定的属性与status准备一个TransactionInfo
+		// 根据指定的属性与status构造一个TransactionInfo，绑定当前线程：ThreadLocal<TransactionInfo>。
 		return prepareTransactionInfo(tm, txAttr, joinpointIdentification, status);
 	}
 

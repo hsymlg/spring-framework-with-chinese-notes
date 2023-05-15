@@ -252,7 +252,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			if (this.advisedBeans.containsKey(cacheKey)) {
 				return null;
 			}
+			//是否基础构件（基础构建不需要代理）：Advice、Pointcut、Advisor、AopInfrastructureBean这四类都算基础构建
 			if (isInfrastructureClass(beanClass) || shouldSkip(beanClass, beanName)) {
+				//添加进advisedBeans ConcurrentHashMap<k=Object,v=Boolean>标记是否需要增强实现，这里基础构建bean不需要代理，都置为false，供后面postProcessAfterInitialization实例化后使用。
 				this.advisedBeans.put(cacheKey, Boolean.FALSE);
 				return null;
 			}
@@ -262,6 +264,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		// Suppresses unnecessary default instantiation of the target bean:
 		// The TargetSource will handle target instances in a custom fashion.
 		TargetSource targetSource = getCustomTargetSource(beanClass, beanName);
+		// TargetSource是spring aop预留给我们用户自定义实例化的接口，如果存在TargetSource就不会默认实例化，而是按照用户自定义的方式实例化
 		if (targetSource != null) {
 			if (StringUtils.hasLength(beanName)) {
 				this.targetSourcedBeans.add(beanName);
@@ -326,27 +329,34 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * @return a proxy wrapping the bean, or the raw bean instance as-is
 	 */
 	protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) {
+		// 如果是用户自定义获取实例，不需要增强处理，直接返回
 		if (StringUtils.hasLength(beanName) && this.targetSourcedBeans.contains(beanName)) {
 			return bean;
 		}
+		// 查询map缓存，标记过false,不需要增强直接返回
 		if (Boolean.FALSE.equals(this.advisedBeans.get(cacheKey))) {
 			return bean;
 		}
+		// 判断一遍springAOP基础构建类，标记过false,不需要增强直接返回
 		if (isInfrastructureClass(bean.getClass()) || shouldSkip(bean.getClass(), beanName)) {
 			this.advisedBeans.put(cacheKey, Boolean.FALSE);
 			return bean;
 		}
 
+		// 获取增强List<Advisor> advisors
 		// Create proxy if we have advice.
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
+		// 如果存在增强
 		if (specificInterceptors != DO_NOT_PROXY) {
+			// 标记增强为TRUE,表示需要增强实现
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
+			// 生成增强代理类（核心）
 			Object proxy = createProxy(
 					bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
 			this.proxyTypes.put(cacheKey, proxy.getClass());
 			return proxy;
 		}
-
+		// 如果不存在增强，标记false,作为缓存，再次进入提高效率，上面利用缓存先校验
 		this.advisedBeans.put(cacheKey, Boolean.FALSE);
 		return bean;
 	}
@@ -432,11 +442,13 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * already pre-configured to access the bean
 	 * @return the AOP proxy for the bean
 	 * @see #buildAdvisors
+	 * 最终生成的是CGLIB代理类
 	 */
 	protected Object createProxy(Class<?> beanClass, @Nullable String beanName,
 			@Nullable Object[] specificInterceptors, TargetSource targetSource) {
-
+		// 如果是ConfigurableListableBeanFactory接口（DefaultListableBeanFactory就是该接口的实现类）则，暴露目标类
 		if (this.beanFactory instanceof ConfigurableListableBeanFactory) {
+			//给beanFactory->beanDefinition定义一个属性：k=AutoProxyUtils.originalTargetClass,v=需要被代理的bean class
 			AutoProxyUtils.exposeTargetClass((ConfigurableListableBeanFactory) this.beanFactory, beanName, beanClass);
 		}
 
@@ -452,23 +464,30 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 				}
 			}
 		}
+		//如果不是代理目标类
 		else {
 			// No proxyTargetClass flag enforced, let's apply our default checks...
+			//如果beanFactory定义了代理目标类（CGLIB）
 			if (shouldProxyTargetClass(beanClass, beanName)) {
+				//代理工厂设置代理目标类
 				proxyFactory.setProxyTargetClass(true);
 			}
 			else {
+				//否则设置代理接口（JDK）
 				evaluateProxyInterfaces(beanClass, proxyFactory);
 			}
 		}
-
+		//把拦截器包装成增强（通知）
 		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
+		//设置进代理工厂
 		proxyFactory.addAdvisors(advisors);
 		proxyFactory.setTargetSource(targetSource);
+		//空方法，留给子类拓展用，典型的spring的风格，喜欢处处留后路
 		customizeProxyFactory(proxyFactory);
-
+		//用于控制代理工厂是否还允许再次添加通知，默认为false（表示不允许）
 		proxyFactory.setFrozen(this.freezeProxy);
 		if (advisorsPreFiltered()) {
+			//默认false，上面已经前置过滤了匹配的增强Advisor
 			proxyFactory.setPreFiltered(true);
 		}
 
@@ -477,6 +496,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		if (classLoader instanceof SmartClassLoader && classLoader != beanClass.getClassLoader()) {
 			classLoader = ((SmartClassLoader) classLoader).getOriginalClassLoader();
 		}
+		//代理工厂获取代理对象的核心方法
 		return proxyFactory.getProxy(classLoader);
 	}
 

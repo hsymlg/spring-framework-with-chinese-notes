@@ -108,6 +108,7 @@ public class TransactionInterceptor extends TransactionAspectSupport implements 
 	}
 
 
+	//事务拦截器的拦截功能就是依靠实现了MethodInterceptor接口
 	@Override
 	@Nullable
 	public Object invoke(MethodInvocation invocation) throws Throwable {

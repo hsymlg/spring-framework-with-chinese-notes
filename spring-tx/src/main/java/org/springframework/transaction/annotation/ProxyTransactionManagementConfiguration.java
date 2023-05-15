@@ -43,6 +43,7 @@ import org.springframework.transaction.interceptor.TransactionInterceptor;
 public class ProxyTransactionManagementConfiguration extends AbstractTransactionManagementConfiguration {
 
 	//BeanFactoryTransactionAttributeSourceAdvisor 事务属性通知器，存放事务注解的方法相关的属性
+	//定义了一个advisor，设置事务属性、设置事务拦截器TransactionInterceptor、设置顺序。核心就是事务拦截器TransactionInterceptor
 	@Bean(name = TransactionManagementConfigUtils.TRANSACTION_ADVISOR_BEAN_NAME)
 	@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 	public BeanFactoryTransactionAttributeSourceAdvisor transactionAdvisor(
