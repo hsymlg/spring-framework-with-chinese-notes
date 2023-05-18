@@ -58,6 +58,12 @@ import org.springframework.lang.Nullable;
  * @see #invocableClone
  * @see #setUserAttribute
  * @see #getUserAttribute
+ * ReflectiveMethodInvocation类实现了ProxyMethodInvocation接口，ProxyMethodInvocation继承了3层接口...ProxyMethodInvocation->MethodInvocation->Invocation->Joinpoint
+ * Joinpoint：连接点接口，定义了执行接口：Object proceed() throws Throwable; 执行当前连接点，并跳到拦截器链上的下一个拦截器。
+ * Invocation：调用接口，继承自Joinpoint，定义了获取参数接口： Object[] getArguments();是一个带参数的、可被拦截器拦截的连接点。
+ * MethodInvocation：方法调用接口，继承自Invocation，定义了获取方法接口：Method getMethod(); 是一个带参数的可被拦截的连接点方法。
+ * ProxyMethodInvocation：代理方法调用接口，继承自MethodInvocation，定义了获取代理对象接口：Object getProxy();是一个由代理类执行的方法调用连接点方法。
+ * ReflectiveMethodInvocation：实现了ProxyMethodInvocation接口，自然就实现了父类接口的的所有接口。获取代理类，获取方法，获取参数，用代理类执行这个方法并且自动跳到下一个连接点。
  */
 public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Cloneable {
 
@@ -159,6 +165,7 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 	@Nullable
 	public Object proceed() throws Throwable {
 		// We start with an index of -1 and increment early.
+		//    启动时索引为-1，唤醒连接点，后续递增
 		if (this.currentInterceptorIndex == this.interceptorsAndDynamicMethodMatchers.size() - 1) {
 			return invokeJoinpoint();
 		}
@@ -175,12 +182,14 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 			else {
 				// Dynamic matching failed.
 				// Skip this interceptor and invoke the next in the chain.
+				// 动态匹配失败，跳过当前拦截，进入下一个（拦截器链）
 				return proceed();
 			}
 		}
 		else {
 			// It's an interceptor, so we just invoke it: The pointcut will have
 			// been evaluated statically before this object was constructed.
+			// 它是一个拦截器，所以我们只调用它:在构造这个对象之前，切入点将被静态地计算。
 			return ((MethodInterceptor) interceptorOrInterceptionAdvice).invoke(this);
 		}
 	}

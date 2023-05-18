@@ -402,7 +402,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			}
 			catch (Throwable ex) {
 				// target invocation exception
-				// 异常回滚 如何走？可能只需提交，也可能只需回滚，这个取决于事务的配置
+				// 异常回滚 如何走？可能只需提交，也可能只需回滚，这个取决于事务的配置，关键点
 				completeTransactionAfterThrowing(txInfo, ex);
 				throw ex;
 			}
