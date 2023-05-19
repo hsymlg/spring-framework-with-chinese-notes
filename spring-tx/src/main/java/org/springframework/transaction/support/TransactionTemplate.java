@@ -119,6 +119,7 @@ public class TransactionTemplate extends DefaultTransactionDefinition
 
 	@Override
 	public void afterPropertiesSet() {
+		//只是校验了事务管理器不为空，实现InitializingBean接口的方法，这个是典型的spring bean初始化流程中的预留接口，专用用来在bean属性加载完毕时执行的方法
 		if (this.transactionManager == null) {
 			throw new IllegalArgumentException("Property 'transactionManager' is required");
 		}
